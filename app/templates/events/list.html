@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Explore Events – EventSphere{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header with Search & Filter Controls -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <h2 class="fw-bold mb-1">Events Catalog</h2>
+            <p class="text-muted small mb-0">Discover and register for conferences, concerts, exhibitions, workshops, tournaments, and social gatherings.</p>
+        </div>
+        <div class="col-md-6">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden">
+                <span class="input-group-text bg-white border-end-0 ps-3">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text" id="catalog-search" class="form-control border-start-0 border-end-0 shadow-none" 
+                       placeholder="Search by title, description or tag..." oninput="onSearchInput(this.value)">
+                <button class="btn btn-primary px-4 fw-semibold" type="button" onclick="loadEvents(currentCategory, currentSearchTerm)">
+                    Search
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Filter Bar -->
+    <div class="d-flex flex-wrap gap-2 mb-4 align-items-center">
+        <span class="small fw-bold text-muted text-uppercase me-2"><i class="bi bi-funnel me-1"></i>Filter:</span>
+        <button class="btn btn-sm rounded-pill px-3 category-pill active" data-category="" onclick="onCategorySelect('')">
+            All Categories
+        </button>
+        {% for cat in ["Technology & Innovation", "Education & Learning", "Music & Entertainment", "Arts & Creativity", "Sports & Fitness", "Business & Entrepreneurship", "Health & Wellness", "Food & Lifestyle", "Travel & Adventure", "Social & Community"] %}
+        <button class="btn btn-sm rounded-pill px-3 category-pill" data-category="{{ cat }}" onclick="onCategorySelect('{{ cat }}')">
+            {{ cat }}
+        </button>
+        {% endfor %}
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div class="text-muted small mt-2">Loading events from MongoDB Atlas...</div>
+    </div>
+
+    <!-- No Events Placeholder -->
+    <div id="no-events-msg" class="text-center py-5" style="display: none;">
+        <div class="avatar bg-light text-muted rounded-circle d-inline-flex p-4 mb-3">
+            <i class="bi bi-calendar-x fs-1"></i>
+        </div>
+        <h4 class="fw-bold text-dark">No Events Found</h4>
+        <p class="text-muted small">No upcoming events matched your search query or selected category.</p>
+        <button class="btn btn-outline-primary rounded-pill px-3" onclick="onCategorySelect('')">Reset Filters</button>
+    </div>
+
+    <!-- Event Cards Grid -->
+    <div class="row" id="events-grid"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/search.js') }}?v=2.1"></script>
+<script>
+// Check URL parameters for preset search or category
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const categoryParam = params.get('category') || '';
+    const queryParam = params.get('q') || '';
+
+    if (queryParam) {
+        document.getElementById('catalog-search').value = queryParam;
+        currentSearchTerm = queryParam;
+    }
+    if (categoryParam) {
+        currentCategory = categoryParam;
+        document.querySelectorAll('.category-pill').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.category === categoryParam);
+        });
+    }
+    loadEvents(currentCategory, currentSearchTerm);
+});
+</script>
+{% endblock %}

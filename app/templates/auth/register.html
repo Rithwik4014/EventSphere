@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Register Account – EventSphere{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm border-0 rounded-4 p-4">
+                <div class="text-center mb-4">
+                    <div class="avatar bg-success-subtle text-success rounded-circle d-inline-flex p-3 mb-2">
+                        <i class="bi bi-person-plus-fill fs-2"></i>
+                    </div>
+                    <h3 class="fw-bold">Create Account</h3>
+                    <p class="text-muted small">Join EventSphere to discover and attend events.</p>
+                </div>
+
+                <form id="register-form">
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold">Full Name</label>
+                        <input type="text" class="form-control" id="name" required placeholder="e.g. Aarav Sharma">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">Email Address</label>
+                        <input type="email" class="form-control" id="email" required placeholder="name@example.com (Gmail, Outlook, Yahoo, etc.)">
+                        <div class="form-text">Accepts any valid email provider (Gmail, Outlook, Yahoo, work or personal email).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label fw-semibold">Password</label>
+                        <input type="password" class="form-control" id="password" required minlength="6" placeholder="At least 6 characters">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Interests (Choose Preferred Categories)</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input cat-check" type="checkbox" id="cat-tech" value="Technology & Innovation" checked>
+                                <label class="form-check-label" for="cat-tech">Technology & Innovation</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input cat-check" type="checkbox" id="cat-edu" value="Education & Learning">
+                                <label class="form-check-label" for="cat-edu">Education & Learning</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input cat-check" type="checkbox" id="cat-music" value="Music & Entertainment">
+                                <label class="form-check-label" for="cat-music">Music & Entertainment</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input cat-check" type="checkbox" id="cat-arts" value="Arts & Creativity">
+                                <label class="form-check-label" for="cat-arts">Arts & Creativity</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input cat-check" type="checkbox" id="cat-sport" value="Sports & Fitness">
+                                <label class="form-check-label" for="cat-sport">Sports & Fitness</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input cat-check" type="checkbox" id="cat-biz" value="Business & Entrepreneurship">
+                                <label class="form-check-label" for="cat-biz">Business & Entrepreneurship</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input cat-check" type="checkbox" id="cat-health" value="Health & Wellness">
+                                <label class="form-check-label" for="cat-health">Health & Wellness</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input cat-check" type="checkbox" id="cat-food" value="Food & Lifestyle">
+                                <label class="form-check-label" for="cat-food">Food & Lifestyle</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input cat-check" type="checkbox" id="cat-travel" value="Travel & Adventure">
+                                <label class="form-check-label" for="cat-travel">Travel & Adventure</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input cat-check" type="checkbox" id="cat-soc" value="Social & Community">
+                                <label class="form-check-label" for="cat-soc">Social & Community</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-reg" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold mt-3">
+                        <span id="reg-spinner" class="spinner-border spinner-border-sm me-2" style="display: none;"></span>
+                        Create Account
+                    </button>
+                </form>
+
+                <div class="text-center small text-muted mt-4">
+                    Already have an account? <a href="/login" class="fw-bold text-primary text-decoration-none">Sign In</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-reg');
+    const spinner = document.getElementById('reg-spinner');
+
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const favorite_categories = Array.from(document.querySelectorAll('.cat-check:checked')).map(el => el.value);
+
+    try {
+        const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name,
+                email,
+                password,
+                preferences: { favorite_categories, receive_notifications: true }
+            })
+        });
+        const data = await res.json();
+
+        btn.disabled = false;
+        spinner.style.display = 'none';
+
+        if (data.success) {
+            showAlert('Registration successful! Please sign in.', 'success');
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 1200);
+        } else {
+            showAlert(data.error || 'Registration failed.', 'danger');
+        }
+    } catch (err) {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        showAlert('Network or server error during registration.', 'danger');
+    }
+});
+</script>
+{% endblock %}

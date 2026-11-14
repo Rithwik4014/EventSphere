@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+{% block title %}Manage Events & Users – EventSphere Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Event & User Management</h2>
+            <p class="text-muted small mb-0">Review active event listings, edit details, reschedule dates, cancel events, and view registered user accounts.</p>
+        </div>
+        <div>
+            <a href="/events/create" class="btn btn-primary rounded-pill px-3">
+                <i class="bi bi-plus-circle me-1"></i>Create New Event
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active rounded-pill px-4" id="events-tab" data-bs-toggle="tab" data-bs-target="#events-pane">
+                <i class="bi bi-calendar-event me-2"></i>Events Catalog (<span id="event-count-badge">0</span>)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link rounded-pill px-4" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-pane" onclick="loadUsersTable()">
+                <i class="bi bi-people me-2"></i>Registered Users (<span id="user-count-badge">0</span>)
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="adminTabsContent">
+        <!-- Events Pane -->
+        <div class="tab-pane fade show active" id="events-pane">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-4">Event Title</th>
+                                <th>Category</th>
+                                <th>Date & Time</th>
+                                <th>Seats Left</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="events-manage-tbody">
+                            <tr><td colspan="7" class="text-center py-4 text-muted">Loading events...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Pane -->
+        <div class="tab-pane fade" id="users-pane">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-4">Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Preferred Categories</th>
+                                <th>Created Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-manage-tbody">
+                            <tr><td colspan="5" class="text-center py-4 text-muted">Loading registered users...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reschedule Event Modal -->
+<div class="modal fade" id="rescheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-calendar-event text-warning me-2"></i>Reschedule Event</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="reschedule-form">
+                <div class="modal-body p-4">
+                    <input type="hidden" id="reschedule-event-id">
+
+                    <div class="p-3 bg-light rounded-3 mb-3">
+                        <div class="text-muted small mb-1 text-uppercase fw-semibold">Event</div>
+                        <div class="fw-bold text-dark" id="reschedule-event-title">-</div>
+                        <div class="small text-muted mt-2">
+                            <i class="bi bi-clock me-1 text-primary"></i>Currently Scheduled: <span class="fw-semibold text-dark" id="reschedule-current-date">-</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reschedule-new-date" class="form-label fw-semibold">New Event Date & Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control" id="reschedule-new-date" required>
+                        <div class="form-text">Must be a date and time in the future.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reschedule-reason" class="form-label fw-semibold">Reason for Rescheduling (Audit Trail)</label>
+                        <textarea class="form-control" id="reschedule-reason" rows="2" placeholder="e.g. Venue maintenance, keynote speaker schedule shift, inclement weather..."></textarea>
+                    </div>
+
+                    <div class="p-3 bg-primary-subtle text-primary rounded-3 small">
+                        <i class="bi bi-shield-check me-1"></i><strong>Guaranteed Integrity:</strong> All confirmed bookings, tickets, and remaining capacities are fully preserved. Previous and updated dates will be recorded for audit purposes.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="btn-confirm-reschedule" class="btn btn-warning rounded-pill px-4 fw-semibold">
+                        <span id="reschedule-spinner" class="spinner-border spinner-border-sm me-2" style="display: none;"></span>
+                        Confirm Reschedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Event Details Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Edit Event Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="edit-event-form">
+                <div class="modal-body p-4">
+                    <input type="hidden" id="edit-event-id">
+
+                    <div class="mb-3">
+                        <label for="edit-title" class="form-label fw-semibold">Event Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit-title" required minlength="3" maxlength="150">
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="edit-category" class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit-category" required>
+                                <option value="Technology & Innovation">Technology & Innovation</option>
+                                <option value="Education & Learning">Education & Learning</option>
+                                <option value="Music & Entertainment">Music & Entertainment</option>
+                                <option value="Arts & Creativity">Arts & Creativity</option>
+                                <option value="Sports & Fitness">Sports & Fitness</option>
+                                <option value="Business & Entrepreneurship">Business & Entrepreneurship</option>
+                                <option value="Health & Wellness">Health & Wellness</option>
+                                <option value="Food & Lifestyle">Food & Lifestyle</option>
+                                <option value="Travel & Adventure">Travel & Adventure</option>
+                                <option value="Social & Community">Social & Community</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-duration" class="form-label fw-semibold">Duration (Hours) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="edit-duration" min="0.5" step="0.5" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit-description" class="form-label fw-semibold">Detailed Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="edit-description" rows="3" required minlength="10"></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="edit-capacity" class="form-label fw-semibold">Total Capacity (Seats) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="edit-capacity" min="1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-price" class="form-label fw-semibold">Ticket Price (₹ INR) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="edit-price" min="0" step="10" required>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold border-top pt-3 mb-3">Venue Specification</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="edit-venue-type" class="form-label fw-semibold">Format</label>
+                            <select class="form-select" id="edit-venue-type">
+                                <option value="in-person">In-Person</option>
+                                <option value="online">Online</option>
+                                <option value="hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label for="edit-venue-name" class="form-label fw-semibold">Venue Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit-venue-name" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label for="edit-venue-address" class="form-label fw-semibold">Address / Room / Link</label>
+                            <input type="text" class="form-control" id="edit-venue-address">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="edit-venue-city" class="form-label fw-semibold">City</label>
+                            <input type="text" class="form-control" id="edit-venue-city">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit-tags" class="form-label fw-semibold">Tags (comma-separated)</label>
+                        <input type="text" class="form-control" id="edit-tags" placeholder="AI, Workshop, Cloud, Coding">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="btn-save-edit" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                        <span id="edit-spinner" class="spinner-border spinner-border-sm me-2" style="display: none;"></span>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let cachedEvents = {};
+
+async function loadEventsTable() {
+    try {
+        const res = await fetch('/api/admin/events');
+        if (res.status === 401 || res.status === 403) {
+            showAlert('Admin privileges required.', 'danger');
+            window.location.href = '/login';
+            return;
+        }
+
+        const data = await res.json();
+        const tbody = document.getElementById('events-manage-tbody');
+
+        if (data.success && data.events) {
+            document.getElementById('event-count-badge').innerText = data.count;
+            cachedEvents = {};
+            data.events.forEach(ev => { cachedEvents[ev._id] = ev; });
+
+            if (data.events.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No events created yet.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.events.map(ev => {
+                const isCancelled = ev.status === 'cancelled';
+                const statusBadge = isCancelled
+                    ? '<span class="badge bg-danger-subtle text-danger px-2 py-1 rounded-pill">Cancelled</span>'
+                    : '<span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill">Published</span>';
+
+                const rescheduledBadge = ev.rescheduled_at
+                    ? `<div class="mt-1"><span class="badge bg-warning-subtle text-dark border" style="font-size:0.7rem;" title="Rescheduled from ${formatDate(ev.previous_event_date)}"><i class="bi bi-clock-history me-1"></i>Rescheduled</span></div>`
+                    : '';
+
+                return `
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">${escapeHtml(ev.title)}</td>
+                        <td><span class="badge bg-light text-dark border">${ev.category}</span></td>
+                        <td class="text-muted small">
+                            <div>${formatDate(ev.event_date)}</div>
+                            ${rescheduledBadge}
+                        </td>
+                        <td><strong>${ev.remaining_capacity}</strong> / ${ev.total_capacity}</td>
+                        <td>${ev.price === 0 ? 'FREE' : '₹' + ev.price}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-end pe-4 text-nowrap">
+                            <a href="/events/${ev._id}" class="btn btn-sm btn-outline-secondary rounded-pill me-1" title="View Event Listing">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="openEditModal('${ev._id}')" title="Edit Event Details">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning rounded-pill me-1" onclick="openRescheduleModal('${ev._id}')" title="Reschedule Date & Time">
+                                <i class="bi bi-calendar-event"></i> Reschedule
+                            </button>
+                            ${!isCancelled ? `
+                                <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="cancelEventAdmin('${ev._id}')" title="Cancel Event">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    } catch (err) {
+        console.error('Failed to load events table:', err);
+    }
+}
+
+function openRescheduleModal(eventId) {
+    const ev = cachedEvents[eventId];
+    if (!ev) return;
+
+    document.getElementById('reschedule-event-id').value = eventId;
+    document.getElementById('reschedule-event-title').innerText = ev.title;
+    document.getElementById('reschedule-current-date').innerText = formatDate(ev.event_date);
+    document.getElementById('reschedule-reason').value = '';
+
+    // Set minimum datetime to current time
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const minStr = now.toISOString().slice(0, 16);
+    const dateInput = document.getElementById('reschedule-new-date');
+    dateInput.min = minStr;
+
+    // Set default value to existing date if in future, else tomorrow
+    const evDate = new Date(ev.event_date);
+    if (evDate > new Date()) {
+        evDate.setMinutes(evDate.getMinutes() - evDate.getTimezoneOffset());
+        dateInput.value = evDate.toISOString().slice(0, 16);
+    } else {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(10, 0, 0, 0);
+        tomorrow.setMinutes(tomorrow.getMinutes() - tomorrow.getTimezoneOffset());
+        dateInput.value = tomorrow.toISOString().slice(0, 16);
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
+    modal.show();
+}
+
+document.getElementById('reschedule-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-confirm-reschedule');
+    const spinner = document.getElementById('reschedule-spinner');
+    const eventId = document.getElementById('reschedule-event-id').value;
+    const newDateStr = document.getElementById('reschedule-new-date').value;
+    const reason = document.getElementById('reschedule-reason').value;
+
+    const selectedDate = new Date(newDateStr);
+    if (selectedDate <= new Date()) {
+        showAlert('New event date must be set to a future date.', 'warning');
+        return;
+    }
+
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+
+    try {
+        const res = await fetch(`/api/events/${eventId}/reschedule`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                new_event_date: new Date(newDateStr).toISOString(),
+                reason: reason
+            })
+        });
+
+        const data = await res.json();
+        btn.disabled = false;
+        spinner.style.display = 'none';
+
+        if (data.success && data.event) {
+            const modalEl = document.getElementById('rescheduleModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            showAlert(`Event "${data.event.title}" successfully rescheduled to ${formatDate(data.event.event_date)}!`, 'success');
+            loadEventsTable();
+        } else {
+            showAlert(data.error || 'Failed to reschedule event.', 'danger');
+        }
+    } catch (err) {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        showAlert('Error communicating with server while rescheduling.', 'danger');
+    }
+});
+
+function openEditModal(eventId) {
+    const ev = cachedEvents[eventId];
+    if (!ev) return;
+
+    document.getElementById('edit-event-id').value = eventId;
+    document.getElementById('edit-title').value = ev.title || '';
+    document.getElementById('edit-category').value = ev.category || 'Technology';
+    document.getElementById('edit-duration').value = ev.duration_hours || 2.0;
+    document.getElementById('edit-description').value = ev.description || '';
+    document.getElementById('edit-capacity').value = ev.total_capacity || 100;
+    document.getElementById('edit-price').value = ev.price !== undefined ? ev.price : 0;
+    document.getElementById('edit-venue-type').value = ev.venue?.type || 'in-person';
+    document.getElementById('edit-venue-name').value = ev.venue?.name || '';
+    document.getElementById('edit-venue-address').value = ev.venue?.address_or_link || '';
+    document.getElementById('edit-venue-city').value = ev.venue?.city || 'Bengaluru';
+    document.getElementById('edit-tags').value = (ev.tags || []).join(', ');
+
+    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+    modal.show();
+}
+
+document.getElementById('edit-event-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-edit');
+    const spinner = document.getElementById('edit-spinner');
+    const eventId = document.getElementById('edit-event-id').value;
+
+    const rawTags = document.getElementById('edit-tags').value;
+    const tags = rawTags.split(',').map(t => t.trim()).filter(t => t.length > 0);
+
+    const updatePayload = {
+        title: document.getElementById('edit-title').value.trim(),
+        category: document.getElementById('edit-category').value,
+        duration_hours: parseFloat(document.getElementById('edit-duration').value),
+        description: document.getElementById('edit-description').value.trim(),
+        total_capacity: parseInt(document.getElementById('edit-capacity').value, 10),
+        price: parseFloat(document.getElementById('edit-price').value),
+        venue: {
+            type: document.getElementById('edit-venue-type').value,
+            name: document.getElementById('edit-venue-name').value.trim(),
+            address_or_link: document.getElementById('edit-venue-address').value.trim(),
+            city: document.getElementById('edit-venue-city').value.trim()
+        },
+        tags: tags
+    };
+
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+
+    try {
+        const res = await fetch(`/api/events/${eventId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatePayload)
+        });
+
+        const data = await res.json();
+        btn.disabled = false;
+        spinner.style.display = 'none';
+
+        if (data.success && data.event) {
+            const modalEl = document.getElementById('editModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            showAlert(`Event "${data.event.title}" details updated successfully!`, 'success');
+            loadEventsTable();
+        } else {
+            showAlert(data.error || 'Failed to update event details.', 'danger');
+        }
+    } catch (err) {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        showAlert('Error communicating with server while updating event.', 'danger');
+    }
+});
+
+async function loadUsersTable() {
+    try {
+        const res = await fetch('/api/admin/users');
+        const data = await res.json();
+        const tbody = document.getElementById('users-manage-tbody');
+
+        if (data.success && data.users) {
+            document.getElementById('user-count-badge').innerText = data.count;
+            tbody.innerHTML = data.users.map(u => {
+                const cats = u.preferences?.favorite_categories || [];
+                return `
+                    <tr>
+                        <td class="ps-4 fw-semibold text-dark">${escapeHtml(u.name)}</td>
+                        <td>${escapeHtml(u.email)}</td>
+                        <td><span class="badge ${u.role === 'admin' ? 'bg-danger' : 'bg-secondary'}">${u.role.toUpperCase()}</span></td>
+                        <td class="small text-muted">${cats.join(', ') || 'None set'}</td>
+                        <td class="text-muted small">${formatDate(u.created_at)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    } catch (err) {
+        console.error('Failed to load users table:', err);
+    }
+}
+
+async function cancelEventAdmin(eventId) {
+    if (!confirm('Are you sure you want to mark this event as cancelled?')) return;
+    try {
+        const res = await fetch(`/api/events/${eventId}/cancel`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+            showAlert('Event cancelled successfully.', 'success');
+            loadEventsTable();
+        } else {
+            showAlert(data.error || 'Failed to cancel event.', 'danger');
+        }
+    } catch (err) {
+        showAlert('Error cancelling event.', 'danger');
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+loadEventsTable();
+</script>
+{% endblock %}

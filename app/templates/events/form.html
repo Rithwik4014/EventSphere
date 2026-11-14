@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Publish New Event – EventSphere{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5">
+                <div class="mb-4">
+                    <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-1 rounded-pill mb-2 font-monospace">ORGANIZER PORTAL</span>
+                    <h2 class="fw-bold mb-1">Publish New Event</h2>
+                    <p class="text-muted small">Create and publish an event to the global discovery catalog with automated capacity management.</p>
+                </div>
+
+                <form id="event-form">
+                    <div class="mb-3">
+                        <label for="title" class="form-label fw-semibold">Event Title</label>
+                        <input type="text" class="form-control" id="title" required minlength="3" maxlength="150" placeholder="e.g. Global Tech Summit 2026: Next-Gen Cloud & AI">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label fw-semibold">Detailed Description</label>
+                        <textarea class="form-control" id="description" rows="4" required minlength="10" placeholder="Provide full details about schedule, agenda, speakers, and venue..."></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="category" class="form-label fw-semibold">Category</label>
+                            <select class="form-select" id="category" required>
+                                <option value="Technology & Innovation" selected>Technology & Innovation</option>
+                                <option value="Education & Learning">Education & Learning</option>
+                                <option value="Music & Entertainment">Music & Entertainment</option>
+                                <option value="Arts & Creativity">Arts & Creativity</option>
+                                <option value="Sports & Fitness">Sports & Fitness</option>
+                                <option value="Business & Entrepreneurship">Business & Entrepreneurship</option>
+                                <option value="Health & Wellness">Health & Wellness</option>
+                                <option value="Food & Lifestyle">Food & Lifestyle</option>
+                                <option value="Travel & Adventure">Travel & Adventure</option>
+                                <option value="Social & Community">Social & Community</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tags" class="form-label fw-semibold">Tags (comma-separated)</label>
+                            <input type="text" class="form-control" id="tags" placeholder="AI, MongoDB, Hackathon, Coding">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="event_date" class="form-label fw-semibold">Event Date & Start Time</label>
+                            <input type="datetime-local" class="form-control" id="event_date" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="duration_hours" class="form-label fw-semibold">Duration (Hours)</label>
+                            <input type="number" class="form-control" id="duration_hours" min="0.5" step="0.5" value="3.0" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="total_capacity" class="form-label fw-semibold">Total Venue Capacity (Seats)</label>
+                            <input type="number" class="form-control" id="total_capacity" min="1" value="100" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="price" class="form-label fw-semibold">Ticket Price in INR (0 for Free)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control" id="price" min="0" step="10" value="0" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold mb-3 border-top pt-3">Venue Specification</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label for="venue_type" class="form-label fw-semibold">Venue Format</label>
+                            <select class="form-select" id="venue_type">
+                                <option value="in-person" selected>In-Person</option>
+                                <option value="online">Online / Virtual</option>
+                                <option value="hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label for="venue_name" class="form-label fw-semibold">Venue Name / Hall</label>
+                            <input type="text" class="form-control" id="venue_name" required placeholder="e.g. Grand Metropolitan Convention Center">
+                        </div>
+                        <div class="col-md-8">
+                            <label for="venue_address" class="form-label fw-semibold">Address / Room / Link</label>
+                            <input type="text" class="form-control" id="venue_address" placeholder="e.g. Block 3, 2nd Floor">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="venue_city" class="form-label fw-semibold">City</label>
+                            <input type="text" class="form-control" id="venue_city" value="Bengaluru">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-submit-event" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold">
+                        <span id="event-spinner" class="spinner-border spinner-border-sm me-2" style="display: none;"></span>
+                        Publish Event to Catalog
+                    </button>
+                    <a href="/events" class="btn btn-light rounded-pill px-3 py-2 ms-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Set default datetime to tomorrow 10:00 AM
+document.addEventListener('DOMContentLoaded', () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0);
+    document.getElementById('event_date').value = tomorrow.toISOString().slice(0, 16);
+});
+
+document.getElementById('event-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-submit-event');
+    const spinner = document.getElementById('event-spinner');
+
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+
+    const title = document.getElementById('title').value;
+    const description = document.getElementById('description').value;
+    const category = document.getElementById('category').value;
+    const rawTags = document.getElementById('tags').value;
+    const tags = rawTags.split(',').map(t => t.trim()).filter(t => t.length > 0);
+
+    const event_date_str = document.getElementById('event_date').value;
+    const event_date = new Date(event_date_str).toISOString();
+
+    const duration_hours = parseFloat(document.getElementById('duration_hours').value);
+    const total_capacity = parseInt(document.getElementById('total_capacity').value, 10);
+    const price = parseFloat(document.getElementById('price').value);
+
+    const venue = {
+        type: document.getElementById('venue_type').value,
+        name: document.getElementById('venue_name').value,
+        address_or_link: document.getElementById('venue_address').value,
+        city: document.getElementById('venue_city').value
+    };
+
+    try {
+        const res = await fetch('/api/events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title,
+                description,
+                category,
+                tags,
+                event_date,
+                duration_hours,
+                total_capacity,
+                price,
+                venue
+            })
+        });
+
+        const data = await res.json();
+        btn.disabled = false;
+        spinner.style.display = 'none';
+
+        if (res.status === 401 || res.status === 403) {
+            showAlert('Admin privileges required to publish events.', 'danger');
+            setTimeout(() => { window.location.href = '/login'; }, 1200);
+            return;
+        }
+
+        if (data.success && data.event) {
+            showAlert('Event published successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = `/events/${data.event._id}`;
+            }, 1000);
+        } else {
+            showAlert(data.error || 'Failed to create event.', 'danger');
+        }
+    } catch (err) {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        showAlert('An error occurred publishing the event.', 'danger');
+    }
+});
+</script>
+{% endblock %}

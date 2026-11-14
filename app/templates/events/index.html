@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% block title %}EventSphere – Universal Event Discovery & Booking Platform{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-center text-lg-start">
+    <div class="container py-4">
+        <div class="row align-items-center justify-content-between">
+            <div class="col-lg-6 col-xl-6 pe-lg-4 mb-5 mb-lg-0">
+                <h1 class="hero-title mb-3">Discover, Book & Experience Events</h1>
+                <p class="hero-subtitle mb-4">
+                    The modern, all-in-one event management platform. Explore conferences, concerts, exhibitions, workshops, tournaments, and community gatherings with real-time seat reservations.
+                </p>
+
+                <!-- Search Bar -->
+                <form action="/events" method="GET" class="card p-2 border-0 shadow-lg rounded-pill mb-4" style="max-width: 620px;">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-0 ps-3">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-0 shadow-none" placeholder="Search by event title, topic, or keyword...">
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Find Events</button>
+                    </div>
+                </form>
+
+                <!-- Category Quick Pills -->
+                <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-lg-start">
+                    {% for cat in ["Technology & Innovation", "Education & Learning", "Music & Entertainment", "Arts & Creativity", "Sports & Fitness", "Business & Entrepreneurship", "Health & Wellness", "Food & Lifestyle", "Travel & Adventure", "Social & Community"] %}
+                    <a href="/events?category={{ cat|urlencode }}" class="btn btn-sm btn-outline-light rounded-pill px-3">{{ cat }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Hero Branded Composition Right Side -->
+            <div class="col-lg-6 col-xl-6 d-none d-lg-block">
+                <div class="hero-composition-wrapper position-relative p-3 rounded-4 shadow-lg">
+                    <!-- Brand Top Header -->
+                    <div class="d-flex align-items-center justify-content-between mb-3 px-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="brand-crest d-flex align-items-center justify-content-center bg-primary text-white rounded-3 shadow-sm" style="width: 38px; height: 38px;">
+                                <i class="bi bi-calendar2-check-fill fs-5"></i>
+                            </div>
+                            <div class="text-start">
+                                <div class="fw-bold text-white small leading-tight">EventSphere</div>
+                                <div class="text-white-50" style="font-size: 0.72rem;">Universal Event Discovery</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-25 text-white border border-primary border-opacity-50 px-3 py-1 rounded-pill small d-flex align-items-center gap-1">
+                            <i class="bi bi-shield-check text-primary"></i>
+                            <span>Verified Platform</span>
+                        </span>
+                    </div>
+
+                    <!-- 2x2 Thematic Event Collage -->
+                    <div class="row g-2 mb-2">
+                        <!-- Concerts & Festivals -->
+                        <div class="col-6">
+                            <div class="hero-tile position-relative rounded-3 overflow-hidden shadow-sm">
+                                <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=600&q=80" alt="Concerts & Live Festivals" class="hero-tile-img" loading="lazy">
+                                <div class="hero-tile-overlay"></div>
+                                <div class="hero-tile-tag">
+                                    <span class="badge bg-danger bg-opacity-90 text-white rounded-pill px-2 py-1"><i class="bi bi-music-note-beamed me-1"></i>Concerts</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Tech Conferences -->
+                        <div class="col-6">
+                            <div class="hero-tile position-relative rounded-3 overflow-hidden shadow-sm">
+                                <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80" alt="Tech Conferences & Summits" class="hero-tile-img" loading="lazy">
+                                <div class="hero-tile-overlay"></div>
+                                <div class="hero-tile-tag">
+                                    <span class="badge bg-primary bg-opacity-90 text-white rounded-pill px-2 py-1"><i class="bi bi-cpu me-1"></i>Conferences</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Sports Tournaments -->
+                        <div class="col-6">
+                            <div class="hero-tile position-relative rounded-3 overflow-hidden shadow-sm">
+                                <img src="https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=600&q=80" alt="Sports & Fitness Tournaments" class="hero-tile-img" loading="lazy">
+                                <div class="hero-tile-overlay"></div>
+                                <div class="hero-tile-tag">
+                                    <span class="badge bg-warning text-dark fw-semibold rounded-pill px-2 py-1"><i class="bi bi-trophy me-1"></i>Sports</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Travel & Adventure Celebrations -->
+                        <div class="col-6">
+                            <div class="hero-tile position-relative rounded-3 overflow-hidden shadow-sm">
+                                <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80" alt="Travel, Expeditions & Celebrations" class="hero-tile-img" loading="lazy">
+                                <div class="hero-tile-overlay"></div>
+                                <div class="hero-tile-tag">
+                                    <span class="badge bg-info text-dark fw-semibold rounded-pill px-2 py-1"><i class="bi bi-compass me-1"></i>Travel & Expeditions</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Feature Highlights Badges -->
+                    <div class="hero-stat-floating hero-stat-left shadow">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                                <i class="bi bi-lightning-charge-fill small"></i>
+                            </div>
+                            <div class="text-start">
+                                <div class="text-white fw-bold" style="font-size: 0.78rem;">Real-Time Seat Availability</div>
+                                <div class="text-white-50" style="font-size: 0.65rem;">Automated Capacity Tracking</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hero-stat-floating hero-stat-right shadow">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bg-info text-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                                <i class="bi bi-qr-code-scan small"></i>
+                            </div>
+                            <div class="text-start">
+                                <div class="text-white fw-bold" style="font-size: 0.78rem;">Digital Tickets &amp; QR Pass</div>
+                                <div class="text-white-50" style="font-size: 0.65rem;">Instant Gate Verification</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4 Feature-Based Highlights Row -->
+        <div class="row g-3 pt-4 mt-3 border-top border-white border-opacity-10">
+            <div class="col-6 col-md-3">
+                <div class="hero-feature-card h-100 p-3 rounded-3 text-start">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="bg-primary bg-opacity-25 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+                            <i class="bi bi-globe2 fs-6"></i>
+                        </div>
+                        <h6 class="fw-bold text-white mb-0 small">Universal Event Discovery</h6>
+                    </div>
+                    <p class="text-white-50 mb-0" style="font-size: 0.75rem;">Browse diverse events across 10 distinct categories with smart filtering.</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="hero-feature-card h-100 p-3 rounded-3 text-start">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="bg-success bg-opacity-25 text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+                            <i class="bi bi-shield-check fs-6"></i>
+                        </div>
+                        <h6 class="fw-bold text-white mb-0 small">Secure Event Booking</h6>
+                    </div>
+                    <p class="text-white-50 mb-0" style="font-size: 0.75rem;">Verified reservations protected by atomic database transactions.</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="hero-feature-card h-100 p-3 rounded-3 text-start">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="bg-warning bg-opacity-25 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+                            <i class="bi bi-lightning-charge-fill fs-6"></i>
+                        </div>
+                        <h6 class="fw-bold text-white mb-0 small">Real-Time Seat Availability</h6>
+                    </div>
+                    <p class="text-white-50 mb-0" style="font-size: 0.75rem;">Live capacity meters with zero-overselling safety guarantee.</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="hero-feature-card h-100 p-3 rounded-3 text-start">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="bg-info bg-opacity-25 text-info rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+                            <i class="bi bi-qr-code-scan fs-6"></i>
+                        </div>
+                        <h6 class="fw-bold text-white mb-0 small">Digital Tickets &amp; QR Verification</h6>
+                    </div>
+                    <p class="text-white-50 mb-0" style="font-size: 0.75rem;">Instant digital pass with printable tickets and unique booking codes.</p>
+                </div>
+            </div>
+        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Upcoming Featured Events -->
+<section class="container py-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Featured Events</h3>
+            <p class="text-muted mb-0">Upcoming events open for registration right now.</p>
+        </div>
+        <a href="/events" class="btn btn-outline-primary rounded-pill px-3">
+            View All Events <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+    </div>
+
+    <div class="row" id="featured-grid">
+        <!-- Rendered dynamically -->
+        <div class="col-12 text-center py-5" id="home-spinner">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="text-muted small mt-2">Loading upcoming events...</div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Highlight Section -->
+<section class="bg-light py-5 border-top border-bottom">
+    <div class="container text-center">
+        <h3 class="fw-bold mb-2">Why EventSphere?</h3>
+        <p class="text-muted mb-5">Built for reliable, high-performance event discovery and real-time ticketing.</p>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border-0 shadow-sm rounded-4 text-center">
+                    <div class="avatar bg-primary-subtle text-primary rounded-circle d-inline-flex p-3 mx-auto mb-3">
+                        <i class="bi bi-shield-check fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold">Guaranteed Reservations</h5>
+                    <p class="text-muted small">Real-time transactional seat booking guarantees zero overselling and instant ticket confirmation.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border-0 shadow-sm rounded-4 text-center">
+                    <div class="avatar bg-success-subtle text-success rounded-circle d-inline-flex p-3 mx-auto mb-3">
+                        <i class="bi bi-search fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold">Smart Event Discovery</h5>
+                    <p class="text-muted small">Full-text search and category filtering allow you to quickly find the conferences, workshops, and gatherings you care about.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border-0 shadow-sm rounded-4 text-center">
+                    <div class="avatar bg-warning-subtle text-warning rounded-circle d-inline-flex p-3 mx-auto mb-3">
+                        <i class="bi bi-bar-chart-line fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold">Real-Time Insights</h5>
+                    <p class="text-muted small">Live analytics dashboards track attendance, ticket availability, and popular categories in real time.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadHomeFeatured() {
+    const grid = document.getElementById('featured-grid');
+    const spinner = document.getElementById('home-spinner');
+
+    try {
+        const res = await fetch('/api/events?limit=6&upcoming=false');
+        const data = await res.json();
+        spinner.style.display = 'none';
+
+        if (data.success && data.events && data.events.length > 0) {
+            grid.innerHTML = data.events.map(ev => {
+                const remaining = ev.remaining_capacity;
+                const total = ev.total_capacity;
+                const isSoldOut = remaining <= 0;
+                const price = ev.price === 0 ? 'FREE' : `₹${ev.price}`;
+                const imgUrl = ev.image_url || getCategoryFallbackImage(ev.category);
+
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="event-card">
+                            <div class="event-card-img-wrapper">
+                                <img src="${imgUrl}" class="event-card-img" alt="${escapeHtml(ev.title)}" loading="lazy" onerror="handleImageError(this, '${escapeHtml(ev.category)}')">
+                                <div class="event-card-overlay"></div>
+                                <span class="event-badge">${escapeHtml(ev.category)}</span>
+                                <span class="event-price-tag">${price}</span>
+                            </div>
+                            <div class="p-4 d-flex flex-column flex-grow-1">
+                                <div class="text-muted small mb-2">
+                                    <i class="bi bi-calendar3 me-1"></i>${formatDate(ev.event_date)}
+                                </div>
+                                <h5 class="fw-bold text-dark mb-2">${escapeHtml(ev.title)}</h5>
+                                <p class="text-muted small flex-grow-1">${escapeHtml(ev.description.substring(0, 100))}...</p>
+                                
+                                <div class="d-flex align-items-center text-muted small mb-3">
+                                    <i class="bi bi-geo-alt me-1 text-danger"></i>
+                                    <span>${escapeHtml(ev.venue?.name || 'Main Hall')}</span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between small text-muted mb-1">
+                                        <span>Seats Left</span>
+                                        <span class="fw-bold ${remaining < 5 ? 'text-danger' : 'text-success'}">${remaining} / ${total}</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar ${remaining < 5 ? 'bg-danger' : 'bg-primary'}" style="width: ${((total - remaining) / total) * 100}%"></div>
+                                    </div>
+                                </div>
+
+                                <a href="/events/${ev._id}" class="btn ${isSoldOut ? 'btn-secondary disabled' : 'btn-primary'} w-100 rounded-pill">
+                                    ${isSoldOut ? 'Sold Out' : 'View Details & Book'}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            grid.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted">No events currently scheduled. Check back soon!</p>
+                </div>
+            `;
+        }
+    } catch (err) {
+        spinner.style.display = 'none';
+        console.error('Failed to load featured events:', err);
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+loadHomeFeatured();
+</script>
+{% endblock %}

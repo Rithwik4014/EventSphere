@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Digital Ticket – EventSphere{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+        <a href="/my-bookings" class="btn btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i>Back to My Bookings
+        </a>
+        <button class="btn btn-primary rounded-pill px-4" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Print Ticket
+        </button>
+    </div>
+
+    <!-- Ticket Card -->
+    <div class="ticket-container" id="ticket-card">
+        <div class="ticket-header d-flex justify-content-between align-items-center">
+            <div>
+                <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill mb-2 font-monospace">EVENTSPHERE PASS</span>
+                <h3 class="fw-bold mb-0 text-white" id="t-event-title">Loading Ticket...</h3>
+                <span class="text-white-50 small" id="t-event-date">Date & Time</span>
+                <div id="t-rescheduled-badge" class="mt-1" style="display: none;"></div>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-success px-3 py-2 rounded-pill fw-semibold" id="t-status">CONFIRMED</span>
+            </div>
+        </div>
+
+        <div class="ticket-body">
+            <div class="row g-4 mb-4">
+                <div class="col-6">
+                    <span class="text-muted small d-block">ATTENDEE NAME</span>
+                    <strong class="fs-5 text-dark" id="t-name">-</strong>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted small d-block">ATTENDEE EMAIL</span>
+                    <strong class="text-dark" id="t-email">-</strong>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted small d-block">BOOKING CODE</span>
+                    <span class="fs-5 fw-bold font-monospace text-primary" id="t-code">-</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted small d-block">TICKETS RESERVED</span>
+                    <strong class="fs-5 text-dark" id="t-count">-</strong>
+                </div>
+            </div>
+
+            <!-- Simulated QR Code & Barcode Section -->
+            <div class="ticket-qr p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small mb-1">SCAN AT VENUE GATE</div>
+                    <div class="small font-monospace text-secondary" id="t-qr-payload" style="word-break: break-all;">-</div>
+                </div>
+                <div class="p-2 bg-white rounded-3 border">
+                    <!-- SVG QR Code Placeholder -->
+                    <svg width="72" height="72" viewBox="0 0 100 100" fill="currentColor">
+                        <rect width="100" height="100" fill="#f8fafc"/>
+                        <rect x="10" y="10" width="25" height="25" fill="#0f172a"/>
+                        <rect x="15" y="15" width="15" height="15" fill="#ffffff"/>
+                        <rect x="65" y="10" width="25" height="25" fill="#0f172a"/>
+                        <rect x="70" y="15" width="15" height="15" fill="#ffffff"/>
+                        <rect x="10" y="65" width="25" height="25" fill="#0f172a"/>
+                        <rect x="15" y="70" width="15" height="15" fill="#ffffff"/>
+                        <rect x="45" y="20" width="10" height="20" fill="#0f172a"/>
+                        <rect x="40" y="55" width="20" height="15" fill="#0f172a"/>
+                        <rect x="65" y="65" width="20" height="20" fill="#0f172a"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-3 bg-light border-top text-center text-muted small">
+            <i class="bi bi-shield-check text-success me-1"></i>Official EventSphere Verified Ticket
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const bookingId = window.location.pathname.split('/').pop();
+
+async function loadTicket() {
+    try {
+        const res = await fetch(`/api/bookings/${bookingId}`);
+        if (res.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        const data = await res.json();
+        if (data.success && data.booking) {
+            const b = data.booking;
+            document.getElementById('t-code').innerText = b.booking_code;
+            document.getElementById('t-status').innerText = b.status.toUpperCase();
+            if (b.status === 'cancelled') {
+                document.getElementById('t-status').className = 'badge bg-danger px-3 py-2 rounded-pill fw-semibold';
+            }
+
+            document.getElementById('t-name').innerText = b.ticket_details?.attendee_name || '-';
+            document.getElementById('t-email').innerText = b.ticket_details?.attendee_email || '-';
+            document.getElementById('t-count').innerText = `${b.tickets_count} Person(s) (₹${b.total_amount})`;
+            document.getElementById('t-qr-payload').innerText = b.ticket_details?.qr_payload || b.booking_code;
+
+            // Fetch event info for title & up-to-date schedule
+            const evRes = await fetch(`/api/events/${b.event_id}`);
+            const evData = await evRes.json();
+            if (evData.success && evData.event) {
+                const ev = evData.event;
+                document.getElementById('t-event-title').innerText = ev.title;
+                document.getElementById('t-event-date').innerText = formatDate(ev.event_date);
+                if (ev.rescheduled_at) {
+                    const rBadge = document.getElementById('t-rescheduled-badge');
+                    rBadge.style.display = 'block';
+                    rBadge.innerHTML = `<span class="badge bg-warning text-dark px-2 py-1 rounded-pill"><i class="bi bi-clock-history me-1"></i>Rescheduled: ${formatDate(ev.event_date)}</span>`;
+                }
+            }
+        } else {
+            showAlert('Ticket not found or unauthorized.', 'danger');
+        }
+    } catch (err) {
+        console.error('Failed to load ticket:', err);
+        showAlert('Could not retrieve digital ticket.', 'danger');
+    }
+}
+
+loadTicket();
+</script>
+{% endblock %}

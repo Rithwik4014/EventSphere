@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Admin Analytics Dashboard – EventSphere{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Dashboard Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-speedometer2 text-primary me-2"></i>Admin Analytics Dashboard</h2>
+            <p class="text-muted small mb-0">Live analytics computed directly via MongoDB Atlas aggregation pipelines.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/admin/manage-events" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-table me-1"></i>Manage Events
+            </a>
+            <a href="/events/create" class="btn btn-primary rounded-pill px-3">
+                <i class="bi bi-plus-circle me-1"></i>Publish New Event
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Metric Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="kpi-card d-flex align-items-center">
+                <div class="kpi-icon bg-primary-subtle text-primary me-3">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div>
+                    <div class="text-muted small text-uppercase fw-semibold">Confirmed Bookings</div>
+                    <div class="kpi-value" id="kpi-bookings">-</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="kpi-card d-flex align-items-center">
+                <div class="kpi-icon bg-success-subtle text-success me-3">
+                    <i class="bi bi-ticket-detailed"></i>
+                </div>
+                <div>
+                    <div class="text-muted small text-uppercase fw-semibold">Tickets Sold</div>
+                    <div class="kpi-value" id="kpi-tickets">-</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="kpi-card d-flex align-items-center">
+                <div class="kpi-icon bg-warning-subtle text-warning me-3">
+                    <i class="bi bi-currency-rupee"></i>
+                </div>
+                <div>
+                    <div class="text-muted small text-uppercase fw-semibold">Total Revenue</div>
+                    <div class="kpi-value" id="kpi-revenue">-</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="kpi-card d-flex align-items-center">
+                <div class="kpi-icon bg-info-subtle text-info me-3">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <div>
+                    <div class="text-muted small text-uppercase fw-semibold">Avg Booking Value</div>
+                    <div class="kpi-value" id="kpi-avg-order">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1: Event Turnout & Category Breakdown -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-0">Top Events by Turnout & Revenue</h5>
+                        <small class="text-muted">Calculated via MongoDB $lookup & $sort aggregation</small>
+                    </div>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="chart-events"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-0">Category Share</h5>
+                        <small class="text-muted">Event volume by category</small>
+                    </div>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="chart-categories"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2: Monthly Trends -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-0">Monthly Revenue & Ticket Sales Trend</h5>
+                        <small class="text-muted">Aggregated by %Y-%m excluding cancelled bookings</small>
+                    </div>
+                </div>
+                <div style="height: 280px;">
+                    <canvas id="chart-trends"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    loadAdminAnalytics();
+});
+</script>
+{% endblock %}

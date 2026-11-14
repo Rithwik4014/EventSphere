@@ -1,0 +1,378 @@
+/* EventSphere Custom Stylesheet - CSE494 Intelligent NoSQL Databases */
+
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --secondary-color: #0ea5e9;
+    --dark-bg: #0f172a;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --text-muted: #64748b;
+    --success-accent: #10b981;
+    --warning-accent: #f59e0b;
+    --danger-accent: #ef4444;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: #f8fafc;
+    color: #1e293b;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+/* Navbar */
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.4rem;
+    letter-spacing: -0.5px;
+    color: var(--primary-color) !important;
+}
+
+.navbar-brand span {
+    color: #0f172a;
+}
+
+.nav-link {
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+    color: var(--primary-color) !important;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    padding: 4.5rem 1rem;
+    border-radius: 0 0 2rem 2rem;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+}
+
+.hero-title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.15rem;
+    color: #94a3b8;
+    max-width: 650px;
+}
+
+/* Hero Branded Composition */
+.hero-composition-wrapper {
+    background: rgba(30, 41, 59, 0.65);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    overflow: visible;
+}
+
+.hero-tile {
+    height: 125px;
+    background-color: #0f172a;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-tile:hover {
+    transform: translateY(-2px) scale(1.02);
+}
+
+.hero-tile-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.hero-tile-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.2) 60%, rgba(15, 23, 42, 0.05) 100%);
+    pointer-events: none;
+}
+
+.hero-tile-tag {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    z-index: 2;
+}
+
+.hero-tile-tag .badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.hero-stat-floating {
+    position: absolute;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+    padding: 0.45rem 0.9rem;
+    z-index: 4;
+}
+
+.hero-stat-left {
+    bottom: -16px;
+    left: 20px;
+}
+
+.hero-stat-right {
+    top: 52px;
+    right: -12px;
+}
+
+.hero-feature-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.hero-feature-card:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Cards & Components */
+.event-card {
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    background: #ffffff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.event-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.08);
+}
+
+/* Event Card Image & Badge Enhancements */
+.event-card-img-wrapper {
+    height: 190px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    background-color: #0f172a;
+}
+
+.event-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+}
+
+.event-card:hover .event-card-img {
+    transform: scale(1.06);
+}
+
+.event-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.75) 0%, rgba(15, 23, 42, 0.1) 45%, rgba(15, 23, 42, 0.25) 100%);
+    pointer-events: none;
+}
+
+.event-card-header {
+    height: 140px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    position: relative;
+    padding: 1rem;
+    display: flex;
+    align-items: flex-end;
+}
+
+.event-card-header.cat-Technology---Innovation,
+.event-card-header.cat-Technology-Innovation,
+.event-card-header.cat-Technology { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+
+.event-card-header.cat-Education---Learning,
+.event-card-header.cat-Education-Learning,
+.event-card-header.cat-Academic { background: linear-gradient(135deg, #1e3a8a, #172554); }
+
+.event-card-header.cat-Music---Entertainment,
+.event-card-header.cat-Music-Entertainment { background: linear-gradient(135deg, #e11d48, #be123c); }
+
+.event-card-header.cat-Arts---Creativity,
+.event-card-header.cat-Arts-Creativity { background: linear-gradient(135deg, #ec4899, #db2777); }
+
+.event-card-header.cat-Sports---Fitness,
+.event-card-header.cat-Sports-Fitness,
+.event-card-header.cat-Sports { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+
+.event-card-header.cat-Business---Entrepreneurship,
+.event-card-header.cat-Business-Entrepreneurship,
+.event-card-header.cat-Business { background: linear-gradient(135deg, #0284c7, #0369a1); }
+
+.event-card-header.cat-Health---Wellness,
+.event-card-header.cat-Health-Wellness,
+.event-card-header.cat-Wellness { background: linear-gradient(135deg, #059669, #047857); }
+
+.event-card-header.cat-Food---Lifestyle,
+.event-card-header.cat-Food-Lifestyle { background: linear-gradient(135deg, #ea580c, #c2410c); }
+
+.event-card-header.cat-Travel---Adventure,
+.event-card-header.cat-Travel-Adventure { background: linear-gradient(135deg, #0284c7, #0f766e); }
+
+.event-card-header.cat-Social---Community,
+.event-card-header.cat-Social-Community { background: linear-gradient(135deg, #0d9488, #0f766e); }
+
+.event-card-header.cat-Cultural { background: linear-gradient(135deg, #d97706, #b45309); }
+.event-card-header.cat-Gaming { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+.event-card-header.cat-Workshop { background: linear-gradient(135deg, #4f46e5, #4338ca); }
+
+.event-badge {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #0f172a;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+}
+
+.event-price-tag {
+    position: absolute;
+    bottom: 0.85rem;
+    left: 0.85rem;
+    background: rgba(15, 23, 42, 0.9);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    z-index: 2;
+}
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 0.5rem;
+}
+
+.category-pill {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+    background: #ffffff;
+    color: #475569;
+    font-weight: 500;
+}
+
+.category-pill:hover, .category-pill.active {
+    background: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
+}
+
+/* KPI Cards */
+.kpi-card {
+    border-radius: 1rem;
+    border: 1px solid var(--border-color);
+    background: #ffffff;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.kpi-value {
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #0f172a;
+}
+
+/* Digital Ticket */
+.ticket-container {
+    max-width: 650px;
+    margin: 2rem auto;
+    background: #ffffff;
+    border-radius: 1.5rem;
+    border: 2px dashed #cbd5e1;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.ticket-header {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #ffffff;
+    padding: 2rem;
+}
+
+.ticket-body {
+    padding: 2rem;
+}
+
+.ticket-qr {
+    background: #f1f5f9;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    text-align: center;
+}
+
+/* Footer */
+footer {
+    background: #ffffff;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    padding: 1.5rem 0;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .ticket-container, .ticket-container * {
+        visibility: visible;
+    }
+    .ticket-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        border: none;
+        box-shadow: none;
+    }
+    .no-print {
+        display: none !important;
+    }
+}

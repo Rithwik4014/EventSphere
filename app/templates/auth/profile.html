@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}User Profile – EventSphere{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card shadow-sm border-0 rounded-4 p-4">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 56px; height: 56px; font-size: 1.5rem;">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0" id="prof-name-header">Loading Profile...</h4>
+                        <span class="badge bg-secondary" id="prof-role-badge">Role</span>
+                    </div>
+                </div>
+
+                <form id="profile-form">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email Address</label>
+                        <input type="email" class="form-control bg-light" id="prof-email" readonly>
+                        <div class="form-text">Registered account email address.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="prof-name" class="form-label fw-semibold">Full Name</label>
+                        <input type="text" class="form-control" id="prof-name" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Favorite Event Categories</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for cat in ["Technology & Innovation", "Education & Learning", "Music & Entertainment", "Arts & Creativity", "Sports & Fitness", "Business & Entrepreneurship", "Health & Wellness", "Food & Lifestyle", "Travel & Adventure", "Social & Community"] %}
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input pref-cat" type="checkbox" id="pref-{{ loop.index }}" value="{{ cat }}">
+                                <label class="form-check-label" for="pref-{{ loop.index }}">{{ cat }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-save-prof" class="btn btn-primary rounded-pill px-4">
+                        Save Preferences
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadProfile() {
+    try {
+        const res = await fetch('/api/auth/profile');
+        if (res.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        const data = await res.json();
+        if (data.success && data.user) {
+            const u = data.user;
+            document.getElementById('prof-name-header').innerText = u.name;
+            document.getElementById('prof-name').value = u.name;
+            document.getElementById('prof-email').value = u.email;
+            document.getElementById('prof-role-badge').innerText = u.role.toUpperCase();
+
+            const favs = u.preferences?.favorite_categories || [];
+            document.querySelectorAll('.pref-cat').forEach(cb => {
+                cb.checked = favs.includes(cb.value);
+            });
+        }
+    } catch (err) {
+        showAlert('Could not load profile details.', 'danger');
+    }
+}
+
+document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('prof-name').value;
+    const favorite_categories = Array.from(document.querySelectorAll('.pref-cat:checked')).map(cb => cb.value);
+
+    try {
+        const res = await fetch('/api/auth/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name,
+                preferences: { favorite_categories, receive_notifications: true }
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showAlert('Profile and preferences updated successfully!', 'success');
+            document.getElementById('prof-name-header').innerText = name;
+        } else {
+            showAlert(data.error || 'Failed to update profile.', 'danger');
+        }
+    } catch (err) {
+        showAlert('Error updating profile.', 'danger');
+    }
+});
+
+loadProfile();
+</script>
+{% endblock %}

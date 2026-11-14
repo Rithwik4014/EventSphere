@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% block title %}Event Details – EventSphere{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+            <li class="breadcrumb-item"><a href="/events" class="text-decoration-none">Events</a></li>
+            <li class="breadcrumb-item active" id="breadcrumb-title">Event Details</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Main Event Information -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+                <div class="position-relative overflow-hidden text-white" id="event-banner" style="min-height: 280px; background-color: #0f172a;">
+                    <img id="detail-banner-img" src="" alt="Event Banner" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover; opacity: 0.85;" onerror="handleImageError(this, document.getElementById('detail-category').innerText)">
+                    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.5) 50%, rgba(15, 23, 42, 0.3) 100%);"></div>
+                    <div class="position-relative p-4 d-flex flex-column justify-content-between" style="min-height: 280px; z-index: 2;">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <span class="badge bg-white text-dark fw-semibold px-3 py-2 rounded-pill shadow-sm" id="detail-category">Loading...</span>
+                            <span class="badge bg-primary text-white px-3 py-2 rounded-pill shadow-sm fs-6" id="detail-price">₹0</span>
+                        </div>
+                        <div>
+                            <h2 class="fw-bold mb-2 text-white" id="detail-title">Loading Event Details...</h2>
+                            <div class="text-white-50 small">
+                                Organized by <strong class="text-white" id="detail-organizer">EventSphere</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4">
+                    <h5 class="fw-bold mb-3">About this Event</h5>
+                    <p class="text-muted leading-relaxed" id="detail-description" style="white-space: pre-line;">
+                        Please wait while event details are loaded from the database...
+                    </p>
+
+                    <h5 class="fw-bold mt-4 mb-2">Tags & Topics</h5>
+                    <div class="d-flex flex-wrap gap-2 mb-4" id="detail-tags"></div>
+
+                    <h5 class="fw-bold mt-4 mb-3">Venue & Timing</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="text-muted small mb-1"><i class="bi bi-clock me-1 text-primary"></i>Date & Duration</div>
+                                <div class="fw-semibold" id="detail-date">-</div>
+                                <div class="small text-muted" id="detail-duration">-</div>
+                                <div id="detail-rescheduled-notice" class="mt-2" style="display: none;"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="text-muted small mb-1"><i class="bi bi-geo-alt me-1 text-danger"></i>Location</div>
+                                <div class="fw-semibold" id="detail-venue-name">-</div>
+                                <div class="small text-muted" id="detail-venue-address">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar / Booking Card -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 rounded-4 p-4 sticky-top" style="top: 90px;">
+                <h5 class="fw-bold mb-3">Registration</h5>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between text-muted small mb-1">
+                        <span>Seat Availability</span>
+                        <span class="fw-bold" id="detail-cap-text">- / -</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary" id="detail-cap-bar" role="progressbar" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-4">
+                    <span class="text-muted">Ticket Price</span>
+                    <span class="h4 fw-bold text-primary mb-0" id="detail-price-sidebar">₹0</span>
+                </div>
+
+                <button id="btn-open-booking" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold mb-2" data-bs-toggle="modal" data-bs-target="#bookingModal">
+                    <i class="bi bi-ticket-perforated me-1"></i>Book Tickets Now
+                </button>
+                <div class="text-center small text-muted">
+                    <i class="bi bi-shield-check text-success me-1"></i>ACID Transaction Guaranteed
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Reserve Tickets</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Event</label>
+                    <div class="form-control bg-light" id="modal-event-title">-</div>
+                </div>
+
+                <form id="booking-form">
+                    <div class="mb-3">
+                        <label for="tickets-count" class="form-label fw-semibold">Number of Tickets (Max 5)</label>
+                        <select class="form-select" id="tickets-count" onchange="updateTotalCost()">
+                            <option value="1" selected>1 Ticket</option>
+                            <option value="2">2 Tickets</option>
+                            <option value="3">3 Tickets</option>
+                            <option value="4">4 Tickets</option>
+                            <option value="5">5 Tickets</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="attendee-name" class="form-label fw-semibold">Attendee Name</label>
+                        <input type="text" class="form-control" id="attendee-name" required placeholder="Full Name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="attendee-email" class="form-label fw-semibold">Attendee Email</label>
+                        <input type="email" class="form-control" id="attendee-email" required placeholder="name@example.com">
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-4">
+                        <span class="fw-semibold">Total Amount Due</span>
+                        <span class="h4 fw-bold text-success mb-0" id="modal-total-amount">₹0</span>
+                    </div>
+
+                    <button type="submit" id="btn-confirm-booking" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">
+                        <span id="booking-spinner" class="spinner-border spinner-border-sm me-2" style="display: none;"></span>
+                        Confirm & Reserve
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentEvent = null;
+const eventId = window.location.pathname.split('/').pop();
+
+async function loadEventDetail() {
+    try {
+        const res = await fetch(`/api/events/${eventId}`);
+        if (res.status === 404) {
+            showAlert('Event not found.', 'danger');
+            return;
+        }
+        const data = await res.json();
+        if (data.success && data.event) {
+            currentEvent = data.event;
+            renderDetails(currentEvent);
+        }
+    } catch (err) {
+        console.error('Failed to load event:', err);
+        showAlert('Error loading event details.', 'danger');
+    }
+}
+
+function renderDetails(ev) {
+    const bannerImg = document.getElementById('detail-banner-img');
+    if (bannerImg) {
+        bannerImg.src = ev.image_url || getCategoryFallbackImage(ev.category);
+    }
+
+    document.getElementById('breadcrumb-title').innerText = ev.title;
+    document.getElementById('detail-title').innerText = ev.title;
+    document.getElementById('modal-event-title').innerText = ev.title;
+    document.getElementById('detail-category').innerText = ev.category;
+    document.getElementById('detail-description').innerText = ev.description;
+    document.getElementById('detail-organizer').innerText = ev.organizer_name || 'EventSphere Organizer';
+
+    const priceText = ev.price === 0 ? 'FREE' : `₹${ev.price}`;
+    document.getElementById('detail-price').innerText = priceText;
+    document.getElementById('detail-price-sidebar').innerText = priceText;
+
+    document.getElementById('detail-date').innerText = formatDate(ev.event_date);
+    document.getElementById('detail-duration').innerText = `${ev.duration_hours} hours`;
+
+    const rNotice = document.getElementById('detail-rescheduled-notice');
+    if (ev.rescheduled_at) {
+        rNotice.style.display = 'block';
+        rNotice.innerHTML = `
+            <span class="badge bg-warning-subtle text-dark border px-2 py-1 rounded-pill">
+                <i class="bi bi-clock-history me-1"></i>Rescheduled Event
+            </span>
+            ${ev.previous_event_date ? `<small class="text-muted d-block mt-1">Original date: ${formatDate(ev.previous_event_date)}</small>` : ''}
+        `;
+    } else {
+        rNotice.style.display = 'none';
+    }
+
+    document.getElementById('detail-venue-name').innerText = ev.venue?.name || 'Main Venue';
+    document.getElementById('detail-venue-address').innerText = `${ev.venue?.address_or_link || ''}, ${ev.venue?.city || 'Bengaluru'}`;
+
+    // Tags
+    const tagsContainer = document.getElementById('detail-tags');
+    if (ev.tags && ev.tags.length > 0) {
+        tagsContainer.innerHTML = ev.tags.map(t => `<span class="badge bg-light text-dark border px-3 py-2 rounded-pill">#${escapeHtml(t)}</span>`).join('');
+    } else {
+        tagsContainer.innerHTML = '<span class="text-muted small">No tags listed.</span>';
+    }
+
+    // Capacity & Booking State
+    const rem = ev.remaining_capacity;
+    const tot = ev.total_capacity;
+    document.getElementById('detail-cap-text').innerText = `${rem} / ${tot}`;
+    const pct = ((tot - rem) / tot) * 100;
+    const bar = document.getElementById('detail-cap-bar');
+    bar.style.width = `${pct}%`;
+    if (rem < 5) bar.className = 'progress-bar bg-danger';
+
+    if (rem <= 0) {
+        const btn = document.getElementById('btn-open-booking');
+        btn.disabled = true;
+        btn.className = 'btn btn-secondary w-100 rounded-pill py-2 fw-semibold mb-2 disabled';
+        btn.innerText = 'Sold Out';
+    }
+
+    // Autofill user name & email in modal if logged in
+    const storedUser = sessionStorage.getItem('eventsphere_user');
+    if (storedUser) {
+        try {
+            const u = JSON.parse(storedUser);
+            document.getElementById('attendee-name').value = u.name || '';
+            document.getElementById('attendee-email').value = u.email || '';
+        } catch (_) {}
+    }
+    updateTotalCost();
+}
+
+function updateTotalCost() {
+    if (!currentEvent) return;
+    const count = parseInt(document.getElementById('tickets-count').value, 10);
+    const total = count * currentEvent.price;
+    document.getElementById('modal-total-amount').innerText = total === 0 ? 'FREE' : `₹${total}`;
+}
+
+document.getElementById('booking-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-confirm-booking');
+    const spinner = document.getElementById('booking-spinner');
+
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+
+    const count = parseInt(document.getElementById('tickets-count').value, 10);
+    const attendee_name = document.getElementById('attendee-name').value;
+    const attendee_email = document.getElementById('attendee-email').value;
+
+    try {
+        const res = await fetch('/api/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                event_id: eventId,
+                tickets_count: count,
+                attendee_name: attendee_name,
+                attendee_email: attendee_email
+            })
+        });
+
+        const data = await res.json();
+        btn.disabled = false;
+        spinner.style.display = 'none';
+
+        if (res.status === 401) {
+            showAlert('Please sign in to complete your ticket booking.', 'warning');
+            setTimeout(() => { window.location.href = '/login'; }, 1200);
+            return;
+        }
+
+        if (data.success && data.booking) {
+            const modalEl = document.getElementById('bookingModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+
+            showAlert(`Booking Confirmed! Reference Code: ${data.booking.booking_code}`, 'success');
+            setTimeout(() => {
+                window.location.href = `/ticket/${data.booking._id}`;
+            }, 1200);
+        } else {
+            showAlert(data.error || 'Failed to complete booking reservation.', 'danger');
+        }
+    } catch (err) {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        showAlert('An error occurred while booking ticket.', 'danger');
+    }
+});
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+loadEventDetail();
+</script>
+{% endblock %}

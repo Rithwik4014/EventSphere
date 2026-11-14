@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}My Bookings & Tickets – EventSphere{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">My Bookings & Tickets</h2>
+            <p class="text-muted small mb-0">View your active reservations, digital tickets, and cancellation records.</p>
+        </div>
+        <a href="/events" class="btn btn-outline-primary rounded-pill px-3">
+            <i class="bi bi-plus-circle me-1"></i>Explore More Events
+        </a>
+    </div>
+
+    <!-- Loading State -->
+    <div id="bookings-loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div class="text-muted small mt-2">Loading your booking history...</div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="bookings-empty" class="text-center py-5" style="display: none;">
+        <div class="avatar bg-light text-muted rounded-circle d-inline-flex p-4 mb-3">
+            <i class="bi bi-ticket-perforated fs-1"></i>
+        </div>
+        <h4 class="fw-bold">No Bookings Found</h4>
+        <p class="text-muted small">You have not reserved tickets for any upcoming events yet.</p>
+        <a href="/events" class="btn btn-primary rounded-pill px-4">Browse Events</a>
+    </div>
+
+    <!-- Bookings Table / Cards -->
+    <div class="row" id="bookings-list" style="display: none;">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-4">Booking & Event</th>
+                                <th>Event Date</th>
+                                <th>Booking Date</th>
+                                <th>Tickets</th>
+                                <th>Total Paid</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookings-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Cancel Reservation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4">Are you sure you want to cancel this booking? This will atomically restock the reserved seats in the database.</p>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Keep Booking</button>
+                    <button type="button" id="btn-confirm-cancel" class="btn btn-danger rounded-pill px-3" onclick="executeCancel()">Confirm Cancellation</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let bookingToCancelId = null;
+
+async function loadUserBookings() {
+    const loading = document.getElementById('bookings-loading');
+    const empty = document.getElementById('bookings-empty');
+    const list = document.getElementById('bookings-list');
+    const tbody = document.getElementById('bookings-tbody');
+
+    try {
+        const res = await fetch('/api/bookings/my-tickets');
+        if (res.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        const data = await res.json();
+        loading.style.display = 'none';
+
+        if (!data.success || !data.bookings || data.bookings.length === 0) {
+            empty.style.display = 'block';
+            return;
+        }
+
+        list.style.display = 'block';
+        tbody.innerHTML = data.bookings.map(b => {
+            const isCancelled = b.status === 'cancelled';
+            const statusBadge = isCancelled 
+                ? '<span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">Cancelled</span>'
+                : '<span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Confirmed</span>';
+
+            const rescheduledBadge = b.is_rescheduled
+                ? `<span class="badge bg-warning-subtle text-dark border ms-1" style="font-size:0.7rem;" title="Rescheduled from ${formatDate(b.previous_event_date)}"><i class="bi bi-clock-history me-1"></i>Rescheduled</span>`
+                : '';
+
+            return `
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-bold text-dark font-monospace">${b.booking_code}</div>
+                        ${b.event_title ? `<div class="small text-muted fw-semibold">${escapeHtml(b.event_title)}</div>` : ''}
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark small">${b.event_date ? formatDate(b.event_date) : '-'} ${rescheduledBadge}</div>
+                        ${b.is_rescheduled && b.previous_event_date ? `<div class="text-muted" style="font-size:0.72rem;">Original: ${formatDate(b.previous_event_date)}</div>` : ''}
+                    </td>
+                    <td class="text-muted small">${formatDate(b.booking_date)}</td>
+                    <td><span class="badge bg-light text-dark border px-2 py-1">${b.tickets_count} Ticket(s)</span></td>
+                    <td class="fw-semibold">${b.total_amount === 0 ? 'FREE' : '₹' + b.total_amount}</td>
+                    <td>${statusBadge}</td>
+                    <td class="text-end pe-4">
+                        <a href="/ticket/${b._id}" class="btn btn-sm btn-outline-primary rounded-pill me-1">
+                            <i class="bi bi-eye me-1"></i>View Ticket
+                        </a>
+                        ${!isCancelled ? `
+                            <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="promptCancel('${b._id}')">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+    } catch (err) {
+        loading.style.display = 'none';
+        console.error('Failed to load user bookings:', err);
+        showAlert('Could not retrieve your bookings.', 'danger');
+    }
+}
+
+function promptCancel(bookingId) {
+    bookingToCancelId = bookingId;
+    const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+    modal.show();
+}
+
+async function executeCancel() {
+    if (!bookingToCancelId) return;
+    const btn = document.getElementById('btn-confirm-cancel');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`/api/bookings/${bookingToCancelId}/cancel`, {
+            method: 'POST'
+        });
+        const data = await res.json();
+        btn.disabled = false;
+
+        const modalEl = document.getElementById('cancelModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+
+        if (data.success) {
+            showAlert('Booking cancelled successfully! Seats have been restocked.', 'success');
+            loadUserBookings();
+        } else {
+            showAlert(data.error || 'Failed to cancel booking.', 'danger');
+        }
+    } catch (err) {
+        btn.disabled = false;
+        showAlert('Error executing booking cancellation.', 'danger');
+    }
+}
+
+loadUserBookings();
+</script>
+{% endblock %}
