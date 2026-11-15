@@ -61,11 +61,13 @@ def create_app(config_name=None):
     @app.route("/api/health", methods=["GET"])
     def health():
         try:
-            db = get_db()
-            db.command("ping")
+            client = get_client()
+            # Fast ping with 1.5s timeout to prevent health check timeouts
+            client.admin.command("ping", maxTimeMS=1500)
             db_status = "connected"
         except Exception as e:
-            db_status = f"disconnected ({str(e)})"
+            err_summary = str(e).splitlines()[0] if str(e) else "disconnected"
+            db_status = f"disconnected ({err_summary[:60]})"
 
         return jsonify({
             "status": "healthy" if db_status == "connected" else "degraded",
