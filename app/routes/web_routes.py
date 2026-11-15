@@ -59,3 +59,7 @@ def admin_dashboard_page():
 @web_bp.route("/admin/manage-events", methods=["GET"])
 def admin_manage_events_page():
     return render_template("admin/event_manage.html")
+
+@web_bp.route("/admin/verify", methods=["GET"])
+def admin_verify_ticket_page():
+    return render_template("admin/verify_ticket.html")

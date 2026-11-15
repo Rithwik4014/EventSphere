@@ -46,6 +46,7 @@ def run_frontend_tests():
         ("/my-bookings", "My Bookings"),
         ("/admin/dashboard", "Admin Analytics Dashboard"),
         ("/admin/manage-events", "Event & User Management"),
+        ("/admin/verify", "Ticket Verification"),
         ("/events/create", "Publish New Event")
     ]
 

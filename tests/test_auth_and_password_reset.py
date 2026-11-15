@@ -1,9 +1,9 @@
 # tests/test_auth_and_password_reset.py
 """
 Comprehensive Test Suite for EventSphere Authentication & Password Reset:
-1. Student login (rithwik@edusphere.in / rithwik123).
+1. Sample user login (user@edusphere.in / user123).
 2. Admin login (admin@edusphere.in / admin123).
-3. Student Quick Fill verification on login page.
+3. Sample User Quick Fill verification on login page.
 4. Invalid login attempt rejection.
 5. Password reset workflow:
    - Email delivery unconfigured notice.
@@ -39,22 +39,22 @@ def run_tests():
 
     with app.app_context():
         # -------------------------------------------------------------
-        # TEST 1: Student Login with New Credentials
+        # TEST 1: Sample User Login with Updated Credentials
         # -------------------------------------------------------------
-        print("\n--- [Test 1] Verifying Student Login (rithwik@edusphere.in) ---")
+        print("\n--- [Test 1] Verifying Sample User Login (user@edusphere.in) ---")
         res_stu = client.post("/api/auth/login", json={
-            "email": "rithwik@edusphere.in",
-            "password": "rithwik123"
+            "email": "user@edusphere.in",
+            "password": "user123"
         })
-        assert res_stu.status_code == 200, f"Student login failed: {res_stu.data}"
+        assert res_stu.status_code == 200, f"Sample user login failed: {res_stu.data}"
         stu_data = res_stu.json
         assert stu_data["success"] is True
         assert stu_data["user"]["role"] == "user"
-        assert stu_data["user"]["email"] == "rithwik@edusphere.in"
-        print(f"[PASS] Student rithwik@edusphere.in logged in successfully (Role: {stu_data['user']['role']}).")
+        assert stu_data["user"]["email"] == "user@edusphere.in"
+        print(f"[PASS] Sample user user@edusphere.in logged in successfully (Role: {stu_data['user']['role']}).")
 
         # -------------------------------------------------------------
-        # TEST 2: Admin Login with New Credentials
+        # TEST 2: Admin Login with Preserved Credentials
         # -------------------------------------------------------------
         print("\n--- [Test 2] Verifying Admin Login (admin@edusphere.in) ---")
         res_adm = client.post("/api/auth/login", json={
@@ -69,31 +69,40 @@ def run_tests():
         print(f"[PASS] Admin admin@edusphere.in logged in successfully (Role: {adm_data['user']['role']}).")
 
         # -------------------------------------------------------------
-        # TEST 3: Login Page & Student Quick-Fill UI Verification
+        # TEST 3: Login Page & Sample User Quick-Fill UI Verification
         # -------------------------------------------------------------
         print("\n--- [Test 3] Verifying Login Page & Quick Fill Elements ---")
         res_login_page = client.get("/login")
         assert res_login_page.status_code == 200
         html = res_login_page.data.decode("utf-8")
 
-        # Must have "Quick Fill" and "Fill Student"
-        assert "Quick Fill:" in html or "Quick Fill" in html, "Quick Fill section missing"
-        assert "Fill Student" in html, "'Fill Student' button missing"
-        assert "fillStudent()" in html, "'fillStudent()' JS function missing"
-        assert "rithwik@edusphere.in" in html, "Student email rithwik@edusphere.in missing from JS"
-        assert "rithwik123" in html, "Student password rithwik123 missing from JS"
+        # Must have "Sample User" button and fillSampleUser() JS function
+        assert "Sample User" in html, "'Sample User' button missing from login.html"
+        assert "fillSampleUser()" in html, "'fillSampleUser()' JS function missing"
+        assert "user@edusphere.in" in html, "user@edusphere.in missing from JS function"
+        assert "user123" in html, "user123 missing from JS function"
 
-        # Must NOT have "Fill Admin" or "CA Project Evaluation Quick-Fill"
+        # Visible text verification: ensure credentials and duplicate heading are not rendered in markup
+        markup_before_script = html.split("<script>")[0]
+        assert "user123" not in markup_before_script, "Security issue: Password 'user123' exposed as visible text in HTML"
+        assert "Password:" not in markup_before_script, "Credential label 'Password:' found in HTML"
+        assert "Email: user@edusphere.in" not in markup_before_script, "Email credential text found in HTML"
+
+        # Must NOT have old student demo credentials
+        assert "Fill Student" not in html, "Old 'Fill Student' button still present in login.html"
+        assert "rithwik@edusphere.in" not in html, "Old student email rithwik@edusphere.in found in login.html"
+        assert "rithwik123" not in html, "Old student password rithwik123 found in login.html"
+
+        # Must NOT have admin credentials exposed
         assert "Fill Admin" not in html, "Security issue: 'Fill Admin' button found in login.html"
-        assert "CA Project Evaluation Quick-Fill" not in html, "Old 'CA Project Evaluation Quick-Fill' text found"
         assert "admin@edusphere.in" not in html, "Admin credentials exposed in client login template"
         assert "admin123" not in html, "Admin password exposed in client login template"
 
-        # Must have Forgot Password link
-        assert "Forgot Password?" in html, "'Forgot Password?' link missing from login.html"
-        assert "/forgot-password" in html, "Link to /forgot-password missing from login.html"
-        print("[PASS] Login page correctly displays 'Quick Fill' with only 'Fill Student' and no admin credentials.")
-        print("[PASS] 'Forgot Password?' link is prominently displayed below password field.")
+        # Must NOT have Forgot Password link
+        assert "Forgot Password?" not in html, "'Forgot Password?' link should be completely removed from login.html"
+        assert "/forgot-password" not in html, "Link to /forgot-password should be completely removed from login.html"
+        print("[PASS] Login page correctly displays single 'Sample User' button without visible password text.")
+        print("[PASS] 'Forgot Password?' link is completely absent from the login page.")
 
         # -------------------------------------------------------------
         # TEST 4: Invalid Login Attempts
@@ -101,7 +110,7 @@ def run_tests():
         print("\n--- [Test 4] Verifying Invalid Login Rejection ---")
         # Wrong password
         res_bad_pw = client.post("/api/auth/login", json={
-            "email": "rithwik@edusphere.in",
+            "email": "user@edusphere.in",
             "password": "wrongPassword123!"
         })
         assert res_bad_pw.status_code == 401
@@ -116,7 +125,7 @@ def run_tests():
         assert res_bad_email.json["success"] is False
 
         # Missing email or password
-        res_missing = client.post("/api/auth/login", json={"email": "rithwik@edusphere.in"})
+        res_missing = client.post("/api/auth/login", json={"email": "user@edusphere.in"})
         assert res_missing.status_code == 400
         print("[PASS] Invalid login attempts (wrong password, non-existent email, missing fields) rejected correctly.")
 
@@ -125,7 +134,7 @@ def run_tests():
         # -------------------------------------------------------------
         print("\n--- [Test 5] Password Recovery Request & Email Unconfigured Notice ---")
         res_forgot = client.post("/api/auth/forgot-password", json={
-            "email": "rithwik@edusphere.in"
+            "email": "user@edusphere.in"
         })
         assert res_forgot.status_code == 503
         data_forgot = res_forgot.json
@@ -138,7 +147,7 @@ def run_tests():
         # TEST 6: Secure Password Reset Token Workflow & Hash Storage
         # -------------------------------------------------------------
         print("\n--- [Test 6] Secure Token Generation, SHA-256 Hashing, & Verification ---")
-        raw_token = UserService.create_password_reset_token("rithwik@edusphere.in", expires_in_minutes=15)
+        raw_token = UserService.create_password_reset_token("user@edusphere.in", expires_in_minutes=15)
         assert raw_token and len(raw_token) >= 32
 
         # Check DB record: raw_token MUST NOT be in DB; only token_hash (SHA-256)
@@ -152,7 +161,7 @@ def run_tests():
         print("[PASS] Reset token is cryptographically secure and stored only as SHA-256 hash (never plaintext).")
 
         # Execute password reset with valid token
-        new_test_pw = "newRithwikPass2026!"
+        new_test_pw = "newUserPass2026!"
         res_reset = client.post("/api/auth/reset-password", json={
             "token": raw_token,
             "new_password": new_test_pw
@@ -162,14 +171,14 @@ def run_tests():
 
         # Verify old password no longer works
         old_login = client.post("/api/auth/login", json={
-            "email": "rithwik@edusphere.in",
-            "password": "rithwik123"
+            "email": "user@edusphere.in",
+            "password": "user123"
         })
         assert old_login.status_code == 401, "Old password must not work after reset!"
 
         # Verify new password works
         new_login = client.post("/api/auth/login", json={
-            "email": "rithwik@edusphere.in",
+            "email": "user@edusphere.in",
             "password": new_test_pw
         })
         assert new_login.status_code == 200, "New password must authenticate successfully!"
@@ -192,7 +201,7 @@ def run_tests():
         # -------------------------------------------------------------
         print("\n--- [Test 8] Verifying Token Expiration Enforcement ---")
         # Create expired token (expires_in_minutes=-10)
-        expired_token = UserService.create_password_reset_token("rithwik@edusphere.in", expires_in_minutes=-10)
+        expired_token = UserService.create_password_reset_token("user@edusphere.in", expires_in_minutes=-10)
         res_expired = client.post("/api/auth/reset-password", json={
             "token": expired_token,
             "new_password": "YetAnotherPassword123!"
@@ -213,11 +222,11 @@ def run_tests():
         assert "Invalid" in res_fake.json["error"] or "unrecognized" in res_fake.json["error"]
         print(f"[PASS] Fake token rejected with 400: '{res_fake.json['error']}'")
 
-        # Restore original rithwik123 password
+        # Restore original user123 password
         from werkzeug.security import generate_password_hash
-        user_doc = UserService.get_user_by_email("rithwik@edusphere.in")
-        UserService.update_user(user_doc["_id"], {"password_hash": generate_password_hash("rithwik123")})
-        print("[OK] Restored rithwik@edusphere.in password to 'rithwik123'.")
+        user_doc = UserService.get_user_by_email("user@edusphere.in")
+        UserService.update_user(user_doc["_id"], {"password_hash": generate_password_hash("user123")})
+        print("[OK] Restored user@edusphere.in password to 'user123'.")
 
         # -------------------------------------------------------------
         # TEST 10: Public Registration Security (Cannot register as admin)

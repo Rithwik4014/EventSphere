@@ -150,14 +150,14 @@ def run_security_tests():
         # TEST 6: Demo Accounts Functionality Check
         # -------------------------------------------------------------
         print("\n--- [Test 6] Preserved Demo Accounts Authentication ---")
-        res_stu = client.post("/api/auth/login", json={"email": "rithwik@edusphere.in", "password": "rithwik123"})
+        res_stu = client.post("/api/auth/login", json={"email": "user@edusphere.in", "password": "user123"})
         assert res_stu.status_code == 200
         assert res_stu.json["user"]["role"] == "user"
 
         res_adm = client.post("/api/auth/login", json={"email": "admin@edusphere.in", "password": "admin123"})
         assert res_adm.status_code == 200
         assert res_adm.json["user"]["role"] == "admin"
-        print("[PASS] Both rithwik@edusphere.in and admin@edusphere.in authenticate successfully with intended roles.")
+        print("[PASS] Both user@edusphere.in and admin@edusphere.in authenticate successfully with intended roles.")
 
         print("\n" + "=" * 65)
         print("ALL SECURITY & RBAC TESTS PASSED WITH 100% SUCCESS!")

@@ -167,20 +167,13 @@ def forgot_password():
         }), 400
 
     normalized_email = email.strip().lower()
-    user = UserService.get_user_by_email(normalized_email)
-    if not user:
-        return jsonify({
-            "success": False,
-            "error": "No registered account found with that email address."
-        }), 404
 
-    # Check whether email delivery service is configured
-    has_smtp = bool(
-        current_app.config.get("MAIL_SERVER") or
-        os.environ.get("MAIL_SERVER") or
-        os.environ.get("SMTP_HOST") or
-        os.environ.get("SMTP_SERVER")
-    )
+    # Check whether email delivery service is configured with valid credentials
+    mail_username = current_app.config.get("MAIL_USERNAME") or os.environ.get("MAIL_USERNAME")
+    mail_password = current_app.config.get("MAIL_PASSWORD") or os.environ.get("MAIL_PASSWORD")
+    mail_server = current_app.config.get("MAIL_SERVER") or os.environ.get("MAIL_SERVER")
+
+    has_smtp = bool(mail_server and mail_username and mail_password)
 
     if not has_smtp:
         return jsonify({
@@ -189,13 +182,61 @@ def forgot_password():
             "error": "Email delivery service is not configured on this server. Password recovery via email requires SMTP configuration."
         }), 503
 
+    user = UserService.get_user_by_email(normalized_email)
+    if not user:
+        # Prevent email enumeration when SMTP is configured
+        return jsonify({
+            "success": True,
+            "email_configured": True,
+            "message": "If an account with that email exists, password reset instructions have been sent."
+        }), 200
+
     # When SMTP is configured, generate time-limited token and dispatch email
-    UserService.create_password_reset_token(normalized_email)
-    return jsonify({
-        "success": True,
-        "email_configured": True,
-        "message": "Password reset instructions have been dispatched to your email address."
-    }), 200
+    raw_token = UserService.create_password_reset_token(normalized_email)
+    mail_port = int(current_app.config.get("MAIL_PORT") or os.environ.get("MAIL_PORT") or 587)
+    mail_use_tls = current_app.config.get("MAIL_USE_TLS", True)
+    base_url = current_app.config.get("BASE_URL") or os.environ.get("BASE_URL") or "http://127.0.0.1:5050"
+    reset_link = f"{base_url.rstrip('/')}/reset-password?token={raw_token}"
+
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+
+        msg = MIMEMultipart()
+        msg["From"] = current_app.config.get("MAIL_DEFAULT_SENDER") or mail_username
+        msg["To"] = normalized_email
+        msg["Subject"] = "EventSphere Password Reset Request"
+
+        body = (
+            f"Hello {user.get('name', 'Attendee')},\n\n"
+            f"We received a request to reset your password for your EventSphere account.\n\n"
+            f"Click the link below to reset your password:\n{reset_link}\n\n"
+            f"This link is valid for 15 minutes and can only be used once.\n"
+            f"If you did not make this request, you can safely ignore this email.\n\n"
+            f"Best regards,\nThe EventSphere Team"
+        )
+        msg.attach(MIMEText(body, "plain"))
+
+        server = smtplib.SMTP(mail_server, mail_port, timeout=10)
+        if mail_use_tls:
+            server.starttls()
+        server.login(mail_username, mail_password)
+        server.send_message(msg)
+        server.quit()
+
+        return jsonify({
+            "success": True,
+            "email_configured": True,
+            "message": "Password reset instructions have been dispatched to your email address."
+        }), 200
+    except Exception as e:
+        current_app.logger.error(f"Failed to send password reset email via SMTP: {e}")
+        return jsonify({
+            "success": False,
+            "email_configured": False,
+            "error": f"Failed to send reset email via SMTP: {str(e)}"
+        }), 500
 
 @auth_bp.route("/reset-password", methods=["POST"])
 def reset_password():

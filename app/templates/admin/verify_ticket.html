@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% block title %}Ticket Verification & Gate Check-in – EventSphere Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-qr-code-scan text-primary me-2"></i>Admin Ticket Verification & Check-in
+            </h2>
+            <p class="text-muted small mb-0">
+                Verify scanned attendee QR tickets against MongoDB Atlas and securely record gate admissions.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/admin/manage-events" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-table me-1"></i>Manage Events
+            </a>
+            <a href="/admin/dashboard" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-speedometer2 me-1"></i>Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Verification Input Card -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-upc-scan text-primary me-2"></i>Scan or Enter Ticket Payload</h5>
+        <form id="verify-form" onsubmit="event.preventDefault(); verifyTicket();">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-9">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-qr-code"></i></span>
+                        <input type="text" id="payload-input" class="form-control border-start-0 font-monospace" 
+                               placeholder="e.g. EVT-2026-XXXXXX|6af...|6af... or EVT-2026-XXXXXX" required autofocus>
+                    </div>
+                    <div class="form-text mt-1 text-muted small">
+                        Paste or scan the QR code verification payload (<code>booking_code|user_id|event_id</code>) or public booking code.
+                    </div>
+                </div>
+                <div class="col-md-3 d-grid">
+                    <button type="submit" id="btn-verify" class="btn btn-primary btn-lg rounded-pill">
+                        <i class="bi bi-search me-1"></i>Verify Ticket
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Live Status / Message Container -->
+    <div id="status-container" style="display: none;"></div>
+
+    <!-- Green Confirmation Message Container (Displayed on Successful Check-in) -->
+    <div id="confirmation-container" style="display: none;">
+        <div class="alert alert-success border-2 shadow-sm rounded-4 p-4 mb-4">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle bg-success text-white p-2 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                    <i class="bi bi-check2-all fs-3"></i>
+                </div>
+                <div>
+                    <h4 class="alert-heading fw-bold mb-0 text-success">Ticket Checked In Successfully!</h4>
+                    <span class="text-success-emphasis small">Gate admission verified and recorded in MongoDB Atlas.</span>
+                </div>
+            </div>
+            <hr class="border-success-subtle">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-muted small text-uppercase fw-semibold">Attendee Details</div>
+                    <strong class="fs-5 text-dark d-block" id="conf-attendee-name">-</strong>
+                    <div class="text-muted small" id="conf-attendee-email">-</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small text-uppercase fw-semibold">Event Information</div>
+                    <strong class="fs-5 text-dark d-block" id="conf-event-title">-</strong>
+                    <div class="text-muted small">
+                        <i class="bi bi-geo-alt me-1 text-danger"></i><span id="conf-event-venue">-</span> • 
+                        <i class="bi bi-calendar3 me-1 text-primary"></i><span id="conf-event-date">-</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small text-uppercase fw-semibold">Booking Code</div>
+                    <span class="fs-5 font-monospace fw-bold text-primary" id="conf-booking-code">-</span>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small text-uppercase fw-semibold">Seats Admitted</div>
+                    <strong class="fs-5 text-dark" id="conf-tickets-count">-</strong>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small text-uppercase fw-semibold">Check-in Timestamp</div>
+                    <div class="small font-monospace text-dark fw-bold" id="conf-timestamp">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verified Ticket Details Card (Ready for Check-In) -->
+    <div id="ticket-result-card" class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4" style="display: none;">
+        <div class="card-header bg-primary text-white p-4 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="badge bg-white text-primary rounded-pill px-3 py-1 mb-2 font-monospace">VERIFIED TICKET</span>
+                <h3 class="fw-bold mb-0 text-white" id="res-event-title">-</h3>
+                <span class="text-white-50 small" id="res-event-date">-</span>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-light text-primary px-3 py-2 rounded-pill fw-bold" id="res-status-badge">CONFIRMED</span>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <span class="text-muted small d-block text-uppercase fw-semibold">Attendee Name</span>
+                    <strong class="fs-5 text-dark" id="res-attendee-name">-</strong>
+                    <div class="text-muted small" id="res-attendee-email">-</div>
+                </div>
+                <div class="col-md-6">
+                    <span class="text-muted small d-block text-uppercase fw-semibold">Venue & Location</span>
+                    <strong class="fs-5 text-dark" id="res-event-venue">-</strong>
+                </div>
+                <div class="col-md-6">
+                    <span class="text-muted small d-block text-uppercase fw-semibold">Booking Reference Code</span>
+                    <span class="fs-5 fw-bold font-monospace text-primary" id="res-booking-code">-</span>
+                </div>
+                <div class="col-md-6">
+                    <span class="text-muted small d-block text-uppercase fw-semibold">Tickets Reserved</span>
+                    <strong class="fs-5 text-dark" id="res-tickets-count">-</strong>
+                </div>
+            </div>
+
+            <!-- Action Section with Check In Button -->
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                <div>
+                    <span class="text-muted small d-block">GATE ADMISSION ACTION</span>
+                    <span class="text-secondary small" id="res-action-hint">Click below to record attendee check-in.</span>
+                </div>
+                <div id="checkin-btn-container">
+                    <button id="btn-check-in" class="btn btn-success btn-lg rounded-pill px-4 shadow-sm" onclick="performCheckIn()">
+                        <i class="bi bi-check2-circle me-1"></i>Check In Ticket
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentVerifiedData = null;
+let currentPayload = null;
+
+function clearContainers() {
+    document.getElementById('status-container').style.display = 'none';
+    document.getElementById('status-container').innerHTML = '';
+    document.getElementById('confirmation-container').style.display = 'none';
+    document.getElementById('ticket-result-card').style.display = 'none';
+}
+
+function showStatusMessage(message, type = 'info', icon = 'info-circle') {
+    const cont = document.getElementById('status-container');
+    cont.style.display = 'block';
+    cont.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+            <i class="bi bi-${icon} me-2 fs-5 align-middle"></i>
+            <span class="align-middle">${message}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+}
+
+async function verifyTicket() {
+    const input = document.getElementById('payload-input');
+    const rawVal = input.value.trim();
+    if (!rawVal) return;
+
+    clearContainers();
+    const btn = document.getElementById('btn-verify');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Verifying...';
+
+    currentPayload = rawVal;
+
+    try {
+        const res = await fetch('/api/bookings/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payload: rawVal, check_in: false })
+        });
+
+        const data = await res.json();
+
+        if (res.status === 401) {
+            showStatusMessage('Authentication required. Please sign in as an administrator.', 'danger', 'shield-x');
+            return;
+        }
+        if (res.status === 403) {
+            showStatusMessage('Access denied. Administrator privileges required to verify tickets.', 'danger', 'shield-lock');
+            return;
+        }
+
+        if (res.status === 409 || data.already_checked_in) {
+            // Already checked in
+            showStatusMessage(
+                `<strong>DUPLICATE SCAN:</strong> Ticket <code>${data.booking_code || ''}</code> for <strong>${data.attendee_name || 'Attendee'}</strong> was already checked in at <code>${data.checked_in_at || ''}</code>. Duplicate admission prevented.`,
+                'warning',
+                'exclamation-triangle-fill'
+            );
+            return;
+        }
+
+        if (!res.ok || !data.verified) {
+            showStatusMessage(`<strong>Verification Failed:</strong> ${data.error || 'Invalid ticket or payload.'}`, 'danger', 'x-circle-fill');
+            return;
+        }
+
+        // Ticket successfully verified and confirmed (ready for check-in)
+        currentVerifiedData = data;
+        displayVerifiedTicket(data);
+
+    } catch (err) {
+        console.error('Verification error:', err);
+        showStatusMessage('Network error occurred during ticket verification. Please try again.', 'danger', 'wifi-off');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-search me-1"></i>Verify Ticket';
+    }
+}
+
+function displayVerifiedTicket(data) {
+    document.getElementById('res-event-title').innerText = data.event_title || 'Event Pass';
+    document.getElementById('res-event-date').innerText = data.event_date ? formatDate(data.event_date) : '-';
+    document.getElementById('res-attendee-name').innerText = data.attendee_name || '-';
+    document.getElementById('res-attendee-email').innerText = data.attendee_email || '';
+    document.getElementById('res-event-venue').innerText = data.event_venue || 'TBD';
+    document.getElementById('res-booking-code').innerText = data.booking_code || '-';
+    document.getElementById('res-tickets-count').innerText = `${data.tickets_count || 1} Ticket(s)`;
+
+    const btnCont = document.getElementById('checkin-btn-container');
+    const hint = document.getElementById('res-action-hint');
+
+    if (data.status === 'checked_in' || data.checked_in) {
+        document.getElementById('res-status-badge').innerText = 'CHECKED IN';
+        document.getElementById('res-status-badge').className = 'badge bg-success text-white px-3 py-2 rounded-pill fw-bold';
+        btnCont.innerHTML = `<button class="btn btn-secondary rounded-pill px-4" disabled><i class="bi bi-check-all me-1"></i>Already Checked In</button>`;
+        hint.innerText = `Ticket checked in at ${data.checked_in_at || 'prior scan'}.`;
+    } else {
+        document.getElementById('res-status-badge').innerText = 'CONFIRMED';
+        document.getElementById('res-status-badge').className = 'badge bg-light text-primary px-3 py-2 rounded-pill fw-bold';
+        btnCont.innerHTML = `
+            <button id="btn-check-in" class="btn btn-success btn-lg rounded-pill px-4 shadow-sm" onclick="performCheckIn()">
+                <i class="bi bi-check2-circle me-1"></i>Check In Ticket
+            </button>
+        `;
+        hint.innerText = 'Click below to record attendee gate check-in.';
+    }
+
+    document.getElementById('ticket-result-card').style.display = 'block';
+}
+
+async function performCheckIn() {
+    if (!currentVerifiedData && !currentPayload) return;
+
+    const btn = document.getElementById('btn-check-in');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Checking In...';
+    }
+
+    try {
+        const payloadToSend = {
+            payload: currentPayload,
+            booking_code: currentVerifiedData?.booking_code,
+            user_id: currentVerifiedData?.user_id,
+            event_id: currentVerifiedData?.event_id,
+            booking_id: currentVerifiedData?.booking_id
+        };
+
+        const res = await fetch('/api/bookings/check-in', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadToSend)
+        });
+
+        const data = await res.json();
+
+        if (res.status === 409 || data.already_checked_in) {
+            showStatusMessage(
+                `<strong>DUPLICATE SCAN:</strong> ${data.message || data.error || 'Ticket has already been checked in.'}`,
+                'warning',
+                'exclamation-triangle-fill'
+            );
+            if (btn) {
+                btn.className = 'btn btn-secondary rounded-pill px-4';
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-check-all me-1"></i>Already Checked In';
+            }
+            return;
+        }
+
+        if (!res.ok || !data.checked_in) {
+            showStatusMessage(`<strong>Check-in Failed:</strong> ${data.error || 'Could not complete check-in.'}`, 'danger', 'x-circle-fill');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Check In Ticket';
+            }
+            return;
+        }
+
+        // Check-in Successful!
+        // Display Green Confirmation Message with attendee and event details
+        document.getElementById('conf-attendee-name').innerText = data.attendee_name || currentVerifiedData?.attendee_name || '-';
+        document.getElementById('conf-attendee-email').innerText = data.attendee_email || currentVerifiedData?.attendee_email || '';
+        document.getElementById('conf-event-title').innerText = data.event_title || currentVerifiedData?.event_title || '-';
+        document.getElementById('conf-event-venue').innerText = data.event_venue || currentVerifiedData?.event_venue || 'TBD';
+        document.getElementById('conf-event-date').innerText = data.event_date ? formatDate(data.event_date) : (currentVerifiedData?.event_date ? formatDate(currentVerifiedData.event_date) : '-');
+        document.getElementById('conf-booking-code').innerText = data.booking_code || currentVerifiedData?.booking_code || '-';
+        document.getElementById('conf-tickets-count').innerText = `${data.tickets_count || currentVerifiedData?.tickets_count || 1} Person(s)`;
+        document.getElementById('conf-timestamp').innerText = data.checked_in_at ? formatDateTime(data.checked_in_at) : new Date().toLocaleString();
+
+        document.getElementById('confirmation-container').style.display = 'block';
+
+        // Update verified card status
+        document.getElementById('res-status-badge').innerText = 'CHECKED IN';
+        document.getElementById('res-status-badge').className = 'badge bg-success text-white px-3 py-2 rounded-pill fw-bold';
+        
+        const btnCont = document.getElementById('checkin-btn-container');
+        btnCont.innerHTML = `<button class="btn btn-secondary rounded-pill px-4" disabled><i class="bi bi-check-all me-1"></i>Already Checked In</button>`;
+        document.getElementById('res-action-hint').innerText = `Checked in at ${data.checked_in_at ? formatDateTime(data.checked_in_at) : 'just now'}.`;
+
+        // Smooth scroll to confirmation message
+        document.getElementById('confirmation-container').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    } catch (err) {
+        console.error('Check-in error:', err);
+        showStatusMessage('Network error occurred during check-in. Please try again.', 'danger', 'wifi-off');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Check In Ticket';
+        }
+    }
+}
+
+function formatDateTime(dtStr) {
+    if (!dtStr) return '-';
+    try {
+        const d = new Date(dtStr);
+        return d.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZoneName: 'short'
+        });
+    } catch {
+        return dtStr;
+    }
+}
+
+// Auto-trigger if URL has payload parameter
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get('payload') || params.get('code');
+    if (p) {
+        document.getElementById('payload-input').value = p;
+        verifyTicket();
+    }
+});
+</script>
+{% endblock %}

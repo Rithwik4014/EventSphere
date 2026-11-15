@@ -211,6 +211,14 @@ BOOKING_SCHEMA = {
                 "enum": ["confirmed", "cancelled", "checked_in"],
                 "description": "Reservation status"
             },
+            "checked_in": {
+                "bsonType": "bool",
+                "description": "Whether ticket has been checked in"
+            },
+            "checked_in_at": {
+                "bsonType": ["date", "null"],
+                "description": "Timestamp when the ticket was checked in"
+            },
             "ticket_details": {
                 "bsonType": "object",
                 "required": ["attendee_name", "attendee_email", "qr_payload"],
