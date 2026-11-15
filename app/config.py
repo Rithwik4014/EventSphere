@@ -28,7 +28,7 @@ class Config:
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
     MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "")
-    BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:5050")
+    BASE_URL = os.environ.get("BASE_URL") or os.environ.get("RENDER_EXTERNAL_URL") or "http://127.0.0.1:5050"
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -40,6 +40,7 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
+    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "true").lower() in ("true", "1", "yes")
 
 config_by_name = {
     "development": DevelopmentConfig,

@@ -49,6 +49,14 @@ def create_app(config_name=None):
     app.register_blueprint(bookings_bp)
     app.register_blueprint(admin_bp)
 
+    # Apply ProxyFix when in production or on Render (behind reverse proxy)
+    if config_name == "production" or os.environ.get("RENDER"):
+        try:
+            from werkzeug.middleware.proxy_fix import ProxyFix
+            app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+        except Exception as e:
+            app.logger.warning(f"Could not apply ProxyFix: {e}")
+
     # Healthcheck endpoint
     @app.route("/api/health", methods=["GET"])
     def health():
