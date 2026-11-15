@@ -1,5 +1,7 @@
 # EventSphere
 
+[![Live Website](https://img.shields.io/badge/Live%20Demo-eventsphere--fsrr.onrender.com-46E3B7?style=flat&logo=render&logoColor=white)](https://eventsphere-fsrr.onrender.com)
+[![Deployment Status](https://img.shields.io/badge/Render-Live-success?style=flat&logo=render&logoColor=white)](https://eventsphere-fsrr.onrender.com)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0%2B-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas%20%7C%20PyMongo-47A248?style=flat&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
@@ -7,9 +9,22 @@
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-F7DF1E?style=flat&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Chart.js](https://img.shields.io/badge/Chart.js-4.4-FF6384?style=flat&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
 
+---
+
+## 🌐 Live Demo
+
+The production instance of **EventSphere** is deployed and publicly accessible on **Render** backed by a cloud **MongoDB Atlas** database:
+
+- 🚀 **Live Production Application:** **[https://eventsphere-fsrr.onrender.com](https://eventsphere-fsrr.onrender.com)**
+- 🏥 **Health Check & Database Status:** **[https://eventsphere-fsrr.onrender.com/api/health](https://eventsphere-fsrr.onrender.com/api/health)**
+- ☁️ **Cloud Infrastructure:** Hosted on **Render** using a production Gunicorn WSGI server and TLS termination.
+- 🗄️ **Database Tier:** **MongoDB Atlas** managed cloud cluster (`eventsphere_db`) with PyMongo TLS CA validation and multi-document ACID transactions.
+
+---
+
 EventSphere is a full-stack, universal event discovery, booking, and administrative management platform. Designed to support diverse audiences, EventSphere enables attendees to discover and reserve passes for conferences, concerts, workshops, sports tournaments, and community gatherings, while providing organizers and administrators with tools to manage event lifecycles, seat capacities, bookings, and live analytics.
 
-The application is built on **Python Flask** and connected directly to **MongoDB Atlas** using the official **PyMongo** driver without intermediate ORM layers, utilizing native BSON handling, `$jsonSchema` collection validators, and multi-document ACID transactions.
+The application is built on **Python Flask**, served via **Gunicorn** in production on **Render**, and connected directly to **MongoDB Atlas** using the official **PyMongo** driver without intermediate ORM layers, utilizing native BSON handling, `$jsonSchema` collection validators, and multi-document ACID transactions.
 
 ---
 
@@ -77,6 +92,8 @@ The application is built on **Python Flask** and connected directly to **MongoDB
 | **Frontend** | HTML5, CSS3, JavaScript (ES6+) | Vanilla client scripts, fetch API, responsive glassmorphism UI |
 | **UI Framework** | Bootstrap 5.3, Bootstrap Icons | Responsive grid, modal dialogs, utility components |
 | **Data Visualization** | Chart.js 4.4 | Admin analytics charts and KPI visualizers |
+| **Production WSGI** | Gunicorn 21.2+ | Pre-fork worker model with threaded workers (`gthread`) |
+| **Cloud Hosting** | Render (Web Service) | Automated continuous deployment with TLS/SSL |
 | **Configuration** | python-dotenv | Environment variable management via `.env` |
 
 ---
@@ -153,6 +170,10 @@ EventSphere/
 │   └── test_ticket_qr_and_verification.py # Genuine QR code & gate check-in tests
 ├── .env.example                   # Environment configuration template
 ├── .gitignore                     # Git ignore rules for secrets, caches & logs
+├── .python-version                # Python runtime version lock (3.10.11)
+├── gunicorn.conf.py               # Gunicorn production configuration & worker tuning
+├── Procfile                       # Web process definition for cloud runtime
+├── render.yaml                    # Render Blueprint Infrastructure-as-Code
 ├── PROJECT_ARCHITECTURE.md        # Technical architecture specification
 ├── README.md                      # Project documentation
 ├── requirements.txt               # Python package dependencies
