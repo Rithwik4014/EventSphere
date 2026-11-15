@@ -38,7 +38,15 @@ def get_client():
         mongo_uri = os.environ.get("MONGO_URI")
         if not mongo_uri:
             raise ValueError("MONGO_URI is missing from environment variables.")
-        _client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+        
+        client_kwargs = {"serverSelectionTimeoutMS": 5000}
+        try:
+            import certifi
+            client_kwargs["tlsCAFile"] = certifi.where()
+        except ImportError:
+            pass
+
+        _client = MongoClient(mongo_uri, **client_kwargs)
     return _client
 
 def get_db():

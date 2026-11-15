@@ -30,6 +30,11 @@ def test_connection():
     for auth_source in [None, "admin", db_name]:
         try:
             kwargs = {"serverSelectionTimeoutMS": 5000}
+            try:
+                import certifi
+                kwargs["tlsCAFile"] = certifi.where()
+            except ImportError:
+                pass
             if auth_source:
                 kwargs["authSource"] = auth_source
             client = MongoClient(mongo_uri, **kwargs)
